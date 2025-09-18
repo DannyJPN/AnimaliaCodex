@@ -70,9 +70,9 @@ jobs:
             GOAL="Vyřeš požadavek uvedený v souvisejícím issue/komentáři komplexně a bezpečně."
           fi
 
-          echo "base=$BASE"   >> "$GITHUB_OUTPUT"
-          echo "branch=$BR"   >> "$GITHUB_OUTPUT"
-          echo "goal=$GOAL"   >> "$GITHUB_OUTPUT"
+          echo "base=$BASE"      >> "$GITHUB_OUTPUT"
+          echo "branch=$BR"      >> "$GITHUB_OUTPUT"
+          echo "goal=$GOAL"      >> "$GITHUB_OUTPUT"
           echo "source=$SRC_URL" >> "$GITHUB_OUTPUT"
 
       - name: Prepare branch & git identity
@@ -87,7 +87,7 @@ jobs:
       - name: Run Codex (make changes, commit locally)
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          GITHUB_TOKEN:    ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
@@ -116,6 +116,9 @@ jobs:
 
       - name: Comment with branch & Create PR link
         uses: actions/github-script@v7
+        env:
+          BASE: ${{ steps.ctx.outputs.base }}
+          BRANCH: ${{ steps.ctx.outputs.branch }}
         with:
           script: |
             const issue_number = context.payload.issue
@@ -123,8 +126,8 @@ jobs:
               : (context.payload.pull_request ? context.payload.pull_request.number : null);
             if (!issue_number) { core.setFailed('No issue/PR to comment on.'); return; }
 
-            const base   = `${{ steps.ctx.outputs.base }}`;
-            const branch = `${{ steps.ctx.outputs.branch }}`;
+            const base   = process.env.BASE;
+            const branch = process.env.BRANCH;
             const prUrl  = `https://github.com/${context.repo.owner}/${context.repo.repo}/compare/${base}...${branch}?expand=1`;
 
             const body =
@@ -144,6 +147,9 @@ Plný log je v následujících komentářích.`;
 
       - name: Comment FULL Codex log (chunked)
         uses: actions/github-script@v7
+        env:
+          # jen pro jistotu, kdybys chtěl něco z ENV použít i tady
+          DUMMY: ok
         with:
           script: |
             const fs = require('fs');
@@ -151,7 +157,7 @@ Plný log je v následujících komentářích.`;
             if (!fs.existsSync(path)) { core.setFailed('codex_output.log not found'); return; }
 
             const whole = fs.readFileSync(path, 'utf8');
-            const MAX = 60000;
+            const MAX = 60000; // bezpečně pod limitem GitHubu
             const total = Math.max(1, Math.ceil(whole.length / MAX));
 
             const issue_number = context.payload.issue
