@@ -52,7 +52,7 @@ jobs:
       - name: Run OpenAI Codex (non-interactive, explicit model)
         env:
           OPENAI_API_KEY:   ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_PROJECT_ID:${{ secrets.OPENAI_PROJECT_ID }}
+          OPENAI_PROJECT_ID: ${{ secrets.OPENAI_PROJECT_ID }}
           GITHUB_TOKEN:     ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
