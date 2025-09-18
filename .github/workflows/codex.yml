@@ -1,0 +1,161 @@
+name: Codex Orchestrator
+
+on:
+  # spuštění přes label v issue
+  issues:
+    types: [opened, edited, labeled, reopened]
+  # spuštění přes komentář v issue/PR (např. "@codex run" nebo "@codex plan")
+  issue_comment:
+    types: [created]
+  # na otevřený / synchronizovaný PR – review/opravy
+  pull_request:
+    types: [opened, synchronize, reopened]
+  # manuální spuštění s parametry
+  workflow_dispatch:
+    inputs:
+      goal:
+        description: "Cíl pro Codex (volitelně)"
+        required: false
+        type: string
+      mode:
+        description: "Režim (plan|edit|full-auto)"
+        required: false
+        default: "plan"
+        type: choice
+        options: [plan, edit, full-auto]
+  # periodický běh (např. udržba, refaktor tipy)
+  schedule:
+    - cron: "0 4 * * 1" # každé pondělí 04:00 UTC
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+env:
+  NODE_OPTIONS: "--max-old-space-size=4096"
+
+jobs:
+  codex:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: codex-${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Codex CLI
+        run: |
+          npm i -g @openai/codex-cli || true
+          npx @openai/codex-cli --version || true
+
+      - name: Derive trigger intent
+        id: intent
+        shell: bash
+        run: |
+          # Defaulty
+          MODE="plan"
+          GOAL="Analyzuj repo a připrav návrh změn."
+          SOURCE_URL=""
+
+          if [[ "${{ github.event_name }}" == "issues" ]]; then
+            SOURCE_URL="${{ github.event.issue.html_url }}"
+            # pokud má issue label 'codex', jedeme víc automaticky
+            if echo "${{ toJson(github.event.issue.labels) }}" | grep -qi '"name":"codex"'; then
+              MODE="full-auto"
+              GOAL="Vyřeš uvedené issue a připrav PR (včetně testů)."
+            else
+              MODE="plan"
+              GOAL="Zpracuj analýzu k tomuto issue a navrhni konkrétní TODO a PR plán."
+            fi
+          elif [[ "${{ github.event_name }}" == "issue_comment" ]]; then
+            SOURCE_URL="${{ github.event.issue.html_url }}"
+            BODY="${{ github.event.comment.body }}"
+            if echo "$BODY" | grep -qi "@codex run"; then
+              MODE="full-auto"
+              GOAL="Vyřeš issue/PR dle kontextu a připrav commit/PR."
+            elif echo "$BODY" | grep -qi "@codex edit"; then
+              MODE="edit"
+              GOAL="Proveď cílené úpravy podle komentáře."
+            elif echo "$BODY" | grep -qi "@codex plan"; then
+              MODE="plan"
+              GOAL="Připrav plán, diffy a postup krok za krokem."
+            fi
+          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            SOURCE_URL="${{ github.event.pull_request.html_url }}"
+            MODE="plan"
+            GOAL="Proveď review tohoto PR, navrhni změny a případně je rovnou proveď."
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            MODE="${{ github.event.inputs.mode }}"
+            GOAL="${{ github.event.inputs.goal }}"
+          elif [[ "${{ github.event_name }}" == "schedule" ]]; then
+            MODE="plan"
+            GOAL="Najdi technický dluh, navrhni refaktor a vytvoř úlohy/PR návrhy."
+          fi
+
+          echo "mode=$MODE"   >> "$GITHUB_OUTPUT"
+          echo "goal=$GOAL"   >> "$GITHUB_OUTPUT"
+          echo "source=$SOURCE_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Run Codex
+        id: codex
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN:    ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Bezpečné defaulty, ať se to nespustí bez klíče
+          test -n "$OPENAI_API_KEY" || { echo "OPENAI_API_KEY chybí"; exit 1; }
+
+          # Sestav příkaz – uprav dle své instalace CLI.
+          # Příklady přepínačů (fiktivní, přizpůsob svému CLI):
+          #   --repo .                 : pracuj nad aktuálním checkoutem
+          #   --goal "...text..."      : co má Codex udělat
+          #   --read "issue:<url>"     : přidej kontext issue/PR
+          #   --mode plan|edit|full-auto
+          #   --commit / --open-pr     : pokud CLI podporuje auto commit/PR
+          #   --comment-back           : zapiš výsledek do issue/PR
+          #
+          # Pozn.: Pokud tvoje CLI nemá některé z těchto flagů,
+          #        nahraď je ekvivalentem (nebo odstraň).
+          CMD="npx @openai/codex-cli \
+            --repo . \
+            --goal \"${{ steps.intent.outputs.goal }}\" \
+            --mode \"${{ steps.intent.outputs.mode }}\""
+
+          if [ -n "${{ steps.intent.outputs.source }}" ]; then
+            CMD="$CMD --read \"issue:${{ steps.intent.outputs.source }}\""
+          fi
+
+          echo "Spouštím: $CMD"
+          eval $CMD | tee codex_output.log || true
+
+      - name: Upload Codex log (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: codex-output
+          path: codex_output.log
+          if-no-files-found: ignore
+
+      - name: Comment back to issue/PR (summary)
+        if: ${{ steps.intent.outputs.source != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          URL="${{ steps.intent.outputs.source }}"
+          BODY="✅ Codex běh dokončen\n\n**Režim:** ${{ steps.intent.outputs.mode }}\n**Cíl:** ${{ steps.intent.outputs.goal }}\n\nLog je přiložen jako artifact \`codex-output\`."
+          # Rozlišíme, zda to je issue nebo PR (obojí má /issues/ v API)
+          API_URL=$(echo "$URL" | sed 's#https://github.com/#https://api.github.com/repos/#; s#/pull/#/issues/#')
+          COMMENTS="$API_URL/comments"
+          curl -sS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "$COMMENTS" -d "$(jq -cn --arg body "$BODY" '{body:$body}')" >/dev/null
+
