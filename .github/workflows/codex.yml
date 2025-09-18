@@ -1,246 +1,48 @@
-name: Codex Code
-
+name: OpenAI Codex
 on:
   issue_comment:
     types: [created]
   pull_request_review_comment:
     types: [created]
   issues:
-    types: [opened, assigned, edited]
-  workflow_dispatch: {}
+    types: [opened, assigned]
 
 jobs:
   codex:
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@codex')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@codex')) ||
+      (github.event_name == 'issues' && contains(github.event.issue.body, '@codex'))
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
       issues: write
-
     steps:
-      - name: Guard: should we run? (@codex case-insensitive)
-        id: guard
-        shell: bash
-        run: |
-          set -euo pipefail
-          BODY="$(jq -r '.comment.body // .issue.body // .pull_request.body // ""' "$GITHUB_EVENT_PATH")"
-          if echo "$BODY" | tr '[:upper:]' '[:lower:]' | grep -q "@codex"; then
-            echo "run=true" >> "$GITHUB_OUTPUT"
-            echo "Found @codex in event body."
-          else
-            echo "run=false" >> "$GITHUB_OUTPUT"
-            echo "No @codex in this event body. Exiting gracefully."
-          fi
-
-      - name: Checkout
-        if: steps.guard.outputs.run == 'true'
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node
-        if: steps.guard.outputs.run == 'true'
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-
+          node-version: '20'
       - name: Install Codex CLI
-        if: steps.guard.outputs.run == 'true'
-        shell: bash
-        run: |
-          set -euo pipefail
-          npm i -g @openai/codex-cli || true
-          npx @openai/codex-cli --version || true
-
-      - name: Derive context (base, branch, goal)
-        if: steps.guard.outputs.run == 'true'
-        id: ctx
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          # Base & source URL
-          if [[ "${{ github.event_name }}" == "pull_request_review_comment" ]]; then
-            BASE="${{ github.event.pull_request.base.ref }}"
-            SRC_URL="${{ github.event.pull_request.html_url }}"
-          else
-            BASE="${{ github.event.repository.default_branch }}"
-            SRC_URL="${{ github.event.issue.html_url }}"
-          fi
-
-          BODY="$(jq -r '.comment.body // .issue.body // .pull_request.body // ""' "$GITHUB_EVENT_PATH")"
-
-          # Vytáhni vše ZA @codex (multiline, case-insensitive)
-          GOAL="$(python3 - <<'PY'
-import json, re, sys
-evt = json.load(open(sys.argv[1]))
-body = (evt.get('comment',{}).get('body') or
-        evt.get('issue',{}).get('body') or
-        evt.get('pull_request',{}).get('body') or '')
-m = re.search(r'@codex\\b(.*)', body, re.I|re.S)
-print(m.group(1).strip() if m else '')
-PY
-"$GITHUB_EVENT_PATH"
-)"
-
-          if [[ -z "$GOAL" ]]; then
-            GOAL="Vyřeš požadavek uvedený v souvisejícím issue/komentáři komplexně a bezpečně. Pokud chybí detail, navrhni postup a polož doplňující otázky v PR popisu."
-          fi
-
-          TS=$(date +%Y%m%d-%H%M%S)
-          if [[ "${{ github.event_name }}" == "pull_request_review_comment" ]]; then
-            BR="codex/pr-${{ github.event.pull_request.number }}-${TS}"
-          else
-            BR="codex/issue-${{ github.event.issue.number }}-${TS}"
-          fi
-
-          printf '%s' "$GOAL" > goal.txt
-
-          echo "base=$BASE"      >> "$GITHUB_OUTPUT"
-          echo "branch=$BR"      >> "$GITHUB_OUTPUT"
-          echo "source=$SRC_URL" >> "$GITHUB_OUTPUT"
-
-          echo "Base: $BASE"
-          echo "Branch: $BR"
-          echo "Body length: $(printf %s "$BODY" | wc -c | tr -d ' ')"
-          echo "Goal length: $(printf %s "$GOAL" | wc -c | tr -d ' ')"
-
-      - name: Prepare branch & git identity
-        if: steps.guard.outputs.run == 'true'
-        shell: bash
-        env:
-          BASE:   ${{ steps.ctx.outputs.base }}
-          BRANCH: ${{ steps.ctx.outputs.branch }}
-        run: |
-          set -euo pipefail
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin "$BASE" --depth=1
-          git checkout -b "$BRANCH" "origin/$BASE"
-
-      - name: Run Codex (make changes, commit locally)
-        if: steps.guard.outputs.run == 'true'
-        id: run_codex
+        run: npm install -g @openai/codex
+      - name: Run OpenAI Codex
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          GITHUB_TOKEN:   ${{ secrets.GITHUB_TOKEN }}
-          SOURCE_URL:     ${{ steps.ctx.outputs.source }}
-        shell: bash
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set -euo pipefail
-          test -n "${OPENAI_API_KEY:-}" || { echo "OPENAI_API_KEY chybí"; exit 1; }
-          GOAL_TXT="$(cat goal.txt)"
-
-          CMD=(npx @openai/codex-cli --repo . --mode full-auto --commit --goal "$GOAL_TXT")
-          if [ -n "${SOURCE_URL}" ]; then
-            CMD+=("--read" "issue:${SOURCE_URL}")
+          # Extract prompt from comment/issue body
+          if [[ "${{ github.event_name }}" == "issue_comment" ]]; then
+            PROMPT="${{ github.event.comment.body }}"
+          elif [[ "${{ github.event_name }}" == "pull_request_review_comment" ]]; then
+            PROMPT="${{ github.event.comment.body }}"
+          elif [[ "${{ github.event_name }}" == "issues" ]]; then
+            PROMPT="${{ github.event.issue.body }}"
           fi
-
-          echo "Spouštím: ${CMD[*]}"
-          "${CMD[@]}" | tee codex_output.log || true
-
-          if [[ -n "$(git status --porcelain)" ]]; then
-            git add -A
-            git commit -m "Codex: apply requested changes" || true
-          fi
-
-          # Máme aspoň 1 commit?
-          if git rev-parse -q --verify HEAD^ >/dev/null 2>&1; then
-            echo "has_changes=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_changes=false" >> "$GITHUB_OUTPUT"
-          fi
-          echo "log_size=$(wc -c < codex_output.log | tr -d ' ')" >> "$GITHUB_OUTPUT"
-
-      - name: Push branch to origin (ensure exists)
-        if: steps.guard.outputs.run == 'true'
-        shell: bash
-        env:
-          BRANCH:      ${{ steps.ctx.outputs.branch }}
-          HAS_CHANGES: ${{ steps.run_codex.outputs.has_changes }}
-        run: |
-          set -euo pipefail
-          if [ "${HAS_CHANGES}" != "true" ]; then
-            date > .codex_marker
-            git add .codex_marker
-            git commit -m "Codex: marker commit (no changes from CLI)"
-          fi
-          git push -u origin "$BRANCH"
-
-      - name: Comment with branch & Create PR link (+ diag)
-        if: steps.guard.outputs.run == 'true'
-        uses: actions/github-script@v7
-        env:
-          BASE:     ${{ steps.ctx.outputs.base }}
-          BRANCH:   ${{ steps.ctx.outputs.branch }}
-          LOG_SIZE: ${{ steps.run_codex.outputs.log_size }}
-        with:
-          script: |
-            const issue_number = context.payload.issue
-              ? context.payload.issue.number
-              : (context.payload.pull_request ? context.payload.pull_request.number : null);
-            if (!issue_number) { core.setFailed('No issue/PR to comment on.'); return; }
-
-            const base   = process.env.BASE;
-            const branch = process.env.BRANCH;
-            const prUrl  = `https://github.com/${context.repo.owner}/${context.repo.repo}/compare/${base}...${branch}?expand=1`;
-
-            const body = [
-              '✅ **Codex hotovo**',
-              `- Větev: \`${branch}\``,
-              `- Základní větev: \`${base}\``,
-              `- 👉 [Create PR](${prUrl})`,
-              '',
-              `Diag: log_size=${process.env.LOG_SIZE}`
-            ].join('\n');
-
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number,
-              body
-            });
-
-      - name: Comment FULL Codex log (chunked)
-        if: steps.guard.outputs.run == 'true'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const path = 'codex_output.log';
-            const issue_number = context.payload.issue
-              ? context.payload.issue.number
-              : (context.payload.pull_request ? context.payload.pull_request.number : null);
-            if (!issue_number) { core.setFailed('No issue/PR to comment on.'); return; }
-
-            if (!fs.existsSync(path)) {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number,
-                body: '⚠️ Nebyl vytvořen žádný log (soubor `codex_output.log` chybí).'
-              });
-              return;
-            }
-
-            const whole = fs.readFileSync(path, 'utf8');
-            const MAX = 60000;
-            const total = Math.max(1, Math.ceil(whole.length / MAX));
-
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number,
-              body: `📎 **Codex log – plná délka** (rozsekáno do ${total} částí):`
-            });
-
-            for (let i = 0; i < total; i++) {
-              const chunk = whole.slice(i * MAX, (i + 1) * MAX);
-              const body = `**Část ${i + 1}/${total}**\n\n\`\`\`text\n${chunk}\n\`\`\``;
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number,
-                body
-              });
-            }
+          
+          # Remove @codex trigger and clean prompt
+          CLEAN_PROMPT=$(echo "$PROMPT" | sed 's/@codex//g' | sed 's/^[[:space:]]*//')
+          
+          # Run Codex with the same behavior as Claude Code
+          echo "🤖 OpenAI Codex is processing your request..."
+          codex --approval-mode full-auto "$CLEAN_PROMPT"
