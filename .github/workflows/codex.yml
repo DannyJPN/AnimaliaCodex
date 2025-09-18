@@ -44,7 +44,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Base, body source URL
+          # Base & source URL podle eventu
           if [[ "${{ github.event_name }}" == "pull_request_review_comment" ]]; then
             BASE="${{ github.event.pull_request.base.ref }}"
             SRC_URL="${{ github.event.pull_request.html_url }}"
@@ -53,10 +53,10 @@ jobs:
             SRC_URL="${{ github.event.issue.html_url }}"
           fi
 
-          # Načti celé body z event JSON (multiline)
+          # Načti celé BODY (multiline) z event JSON
           BODY="$(jq -r '.comment.body // .issue.body // .pull_request.body // ""' "$GITHUB_EVENT_PATH")"
 
-          # Vytáhni vše ZA @codex (case-insensitive, multiline)
+          # Vytáhni vše ZA '@codex' (case-insensitive, multiline)
           GOAL="$(python3 - <<'PY'
 import json, re, sys
 evt = json.load(open(sys.argv[1]))
@@ -69,12 +69,11 @@ PY
 "$GITHUB_EVENT_PATH"
 )"
 
-          # fallback, pokud po @codex nic nebylo
           if [[ -z "$GOAL" ]]; then
             GOAL="Vyřeš požadavek uvedený v souvisejícím issue/komentáři komplexně a bezpečně. Pokud chybí detail, navrhni postup a polož doplňující otázky v PR popisu."
           fi
 
-          # Větev podle kontextu
+          # Pojmenuj větev
           TS=$(date +%Y%m%d-%H%M%S)
           if [[ "${{ github.event_name }}" == "pull_request_review_comment" ]]; then
             BR="codex/pr-${{ github.event.pull_request.number }}-${TS}"
@@ -82,32 +81,29 @@ PY
             BR="codex/issue-${{ github.event.issue.number }}-${TS}"
           fi
 
-          # Debug do běhového logu
+          # Ulož GOAL do souboru (multiline safe)
+          printf '%s' "$GOAL" > goal.txt
+
+          # Výstupy pro další kroky (jen hodnoty bez newline)
+          echo "base=$BASE"      >> "$GITHUB_OUTPUT"
+          echo "branch=$BR"      >> "$GITHUB_OUTPUT"
+          echo "source=$SRC_URL" >> "$GITHUB_OUTPUT"
+
+          # Diagnostika do běhu
           echo "Base: $BASE"
           echo "Branch: $BR"
-          echo "Body length: ${#BODY}"
-          echo "Goal length: ${#GOAL}"
-          echo "Goal preview:"
+          echo "Body length: $(printf %s "$BODY" | wc -c | tr -d ' ')"
+          echo "Goal length: $(printf %s "$GOAL" | wc -c | tr -d ' ')"
+          echo "Goal preview (first 400 chars):"
           echo "-----"
-          echo "${GOAL:0:400}"
+          printf '%s' "$GOAL" | head -c 400 || true
+          echo
           echo "-----"
-
-          # Výstupy pro další kroky
-          {
-            echo "base=$BASE"
-            echo "branch=$BR"
-            echo "goal<<EOF"
-            echo "$GOAL"
-            echo "EOF"
-            echo "source=$SRC_URL"
-            echo "body_len=${#BODY}"
-            echo "goal_len=${#GOAL}"
-          } >> "$GITHUB_OUTPUT"
 
       - name: Prepare branch & git identity
         shell: bash
         env:
-          BASE: ${{ steps.ctx.outputs.base }}
+          BASE:   ${{ steps.ctx.outputs.base }}
           BRANCH: ${{ steps.ctx.outputs.branch }}
         run: |
           set -euo pipefail
@@ -121,58 +117,60 @@ PY
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GITHUB_TOKEN:   ${{ secrets.GITHUB_TOKEN }}
-          GOAL_TXT:       ${{ steps.ctx.outputs.goal }}
           SOURCE_URL:     ${{ steps.ctx.outputs.source }}
         shell: bash
         run: |
           set -euo pipefail
           test -n "${OPENAI_API_KEY:-}" || { echo "OPENAI_API_KEY chybí"; exit 1; }
 
-          # Slož příkaz
+          # Načti cíl z goal.txt (multiline safe)
+          GOAL_TXT="$(cat goal.txt)"
+
           CMD=(npx @openai/codex-cli --repo . --mode full-auto --commit --goal "$GOAL_TXT")
           if [ -n "${SOURCE_URL}" ]; then
             CMD+=("--read" "issue:${SOURCE_URL}")
           fi
 
           echo "Spouštím: ${CMD[*]}"
-          # Samotný běh
           "${CMD[@]}" | tee codex_output.log || true
 
-          # Pojistka: kdyby CLI nic nezcommitovalo, ale změny vznikly
+          # Pojistka: kdyby CLI změny udělalo, ale necommitlo
           if [[ -n "$(git status --porcelain)" ]]; then
             git add -A
             git commit -m "Codex: apply requested changes" || true
           fi
 
-          # Uložit stručnou diagnostiku pro další krok
-          echo "has_changes=$(if git diff --quiet HEAD^ HEAD 2>/dev/null; then echo false; else echo true; fi)" >> "$GITHUB_OUTPUT"
+          # Jednoduchá indikace, jestli je větev o commit napřed vůči base
+          if git rev-parse -q --verify HEAD^ >/dev/null 2>&1; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          # Velikost logu pro komentář
           echo "log_size=$(wc -c < codex_output.log | tr -d ' ')" >> "$GITHUB_OUTPUT"
 
-      - name: Push branch to origin (even if empty)
+      - name: Push branch to origin (ensure exists)
         shell: bash
         env:
-          BRANCH: ${{ steps.ctx.outputs.branch }}
+          BRANCH:      ${{ steps.ctx.outputs.branch }}
+          HAS_CHANGES: ${{ steps.run_codex.outputs.has_changes }}
         run: |
           set -euo pipefail
-          # Pokud vůbec nejsou commity na větvi (např. cli nic neudělalo), vytvoříme aspoň prázdnou „marker“ změnu,
-          # ať má uživatel na co kliknout (stejně jako Claude větve zakládá).
-          if ! git rev-parse --verify HEAD >/dev/null 2>&1; then
-            echo "No HEAD? creating initial commit"
+          # Když nevznikl žádný commit, uděláme marker, ať větev existuje
+          if [ "${HAS_CHANGES}" != "true" ]; then
             date > .codex_marker
             git add .codex_marker
-            git commit -m "Codex: marker commit"
+            git commit -m "Codex: marker commit (no changes from CLI)"
           fi
           git push -u origin "$BRANCH"
 
       - name: Comment with branch & Create PR link (+ diag)
         uses: actions/github-script@v7
         env:
-          BASE:      ${{ steps.ctx.outputs.base }}
-          BRANCH:    ${{ steps.ctx.outputs.branch }}
-          GOAL_LEN:  ${{ steps.ctx.outputs.goal_len }}
-          BODY_LEN:  ${{ steps.ctx.outputs.body_len }}
-          HAS_CHG:   ${{ steps.run_codex.outputs.has_changes }}
-          LOG_SIZE:  ${{ steps.run_codex.outputs.log_size }}
+          BASE:       ${{ steps.ctx.outputs.base }}
+          BRANCH:     ${{ steps.ctx.outputs.branch }}
+          LOG_SIZE:   ${{ steps.run_codex.outputs.log_size }}
         with:
           script: |
             const issue_number = context.payload.issue
@@ -184,21 +182,13 @@ PY
             const branch = process.env.BRANCH;
             const prUrl  = `https://github.com/${context.repo.owner}/${context.repo.repo}/compare/${base}...${branch}?expand=1`;
 
-            const diag = [
-              `Diag: body_len=${process.env.BODY_LEN}, goal_len=${process.env.GOAL_LEN}, log_size=${process.env.LOG_SIZE}, has_changes=${process.env.HAS_CHG}`
-            ].join('\n');
-
             const body = [
               '✅ **Codex hotovo**',
               `- Větev: \`${branch}\``,
               `- Základní větev: \`${base}\``,
               `- 👉 [Create PR](${prUrl})`,
               '',
-              diag,
-              '',
-              (process.env.GOAL_LEN === '0'
-                ? '⚠️ Zdá se, že po `@codex` nebyl v těle žádný text. Použil jsem fallback zadání.'
-                : '')
+              `Diag: log_size=${process.env.LOG_SIZE}`
             ].join('\n');
 
             await github.rest.issues.createComment({
