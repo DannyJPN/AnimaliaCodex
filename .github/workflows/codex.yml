@@ -23,7 +23,7 @@ on:
         default: "plan"
         type: choice
         options: [plan, edit, full-auto]
-  # periodický běh (např. udržba, refaktor tipy)
+  # periodický běh (např. údržba, refaktor tipy)
   schedule:
     - cron: "0 4 * * 1" # každé pondělí 04:00 UTC
 
@@ -116,16 +116,6 @@ jobs:
           test -n "$OPENAI_API_KEY" || { echo "OPENAI_API_KEY chybí"; exit 1; }
 
           # Sestav příkaz – uprav dle své instalace CLI.
-          # Příklady přepínačů (fiktivní, přizpůsob svému CLI):
-          #   --repo .                 : pracuj nad aktuálním checkoutem
-          #   --goal "...text..."      : co má Codex udělat
-          #   --read "issue:<url>"     : přidej kontext issue/PR
-          #   --mode plan|edit|full-auto
-          #   --commit / --open-pr     : pokud CLI podporuje auto commit/PR
-          #   --comment-back           : zapiš výsledek do issue/PR
-          #
-          # Pozn.: Pokud tvoje CLI nemá některé z těchto flagů,
-          #        nahraď je ekvivalentem (nebo odstraň).
           CMD="npx @openai/codex-cli \
             --repo . \
             --goal \"${{ steps.intent.outputs.goal }}\" \
@@ -159,3 +149,49 @@ jobs:
           curl -sS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
             "$COMMENTS" -d "$(jq -cn --arg body "$BODY" '{body:$body}')" >/dev/null
 
+      - name: Comment FULL Codex log to issue/PR
+        if: ${{ (github.event_name == 'issues' || github.event_name == 'issue_comment' || github.event_name == 'pull_request') && steps.intent.outputs.source != '' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const core = require('@actions/core');
+
+            const path = 'codex_output.log';
+            if (!fs.existsSync(path)) {
+              core.setFailed('codex_output.log not found');
+              return;
+            }
+
+            const body = fs.readFileSync(path, 'utf8');
+            const MAX = 60000; // bezpečný limit pod hranicí GitHubu (~65k)
+            const total = Math.ceil(body.length / MAX);
+
+            const issue_number = context.payload.issue
+              ? context.payload.issue.number
+              : (context.payload.pull_request ? context.payload.pull_request.number : null);
+
+            if (!issue_number) {
+              core.setFailed('No issue/PR in this event to comment on.');
+              return;
+            }
+
+            // Úvodní hlavička
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number,
+              body: `📎 **Codex log** – plná délka, rozděleno do ${total} částí (po ~${MAX} znacích).`
+            });
+
+            for (let i = 0; i < total; i++) {
+              const start = i * MAX;
+              const chunk = body.slice(start, start + MAX);
+              const header = `**Část ${i+1}/${total}**\n\n`;
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number,
+                body: `${header}\n\`\`\`text\n${chunk}\n\`\`\``
+              });
+            }
