@@ -6,14 +6,11 @@ on:
   pull_request_review_comment:
     types: [created]
   issues:
-    types: [opened, assigned]
+    types: [opened, assigned, edited]
+  workflow_dispatch: {}
 
 jobs:
   codex:
-    if: >-
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@codex')) ||
-      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@codex')) ||
-      (github.event_name == 'issues' && contains(github.event.issue.body, '@codex'))
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -21,30 +18,48 @@ jobs:
       issues: write
 
     steps:
+      - name: Guard: should we run? (@codex case-insensitive)
+        id: guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          BODY="$(jq -r '.comment.body // .issue.body // .pull_request.body // ""' "$GITHUB_EVENT_PATH")"
+          if echo "$BODY" | tr '[:upper:]' '[:lower:]' | grep -q "@codex"; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "Found @codex in event body."
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "No @codex in this event body. Exiting gracefully."
+          fi
+
       - name: Checkout
+        if: steps.guard.outputs.run == 'true'
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Setup Node
+        if: steps.guard.outputs.run == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
       - name: Install Codex CLI
+        if: steps.guard.outputs.run == 'true'
         shell: bash
         run: |
           set -euo pipefail
           npm i -g @openai/codex-cli || true
           npx @openai/codex-cli --version || true
 
-      - name: Derive context (base branch, branch name, goal)
+      - name: Derive context (base, branch, goal)
+        if: steps.guard.outputs.run == 'true'
         id: ctx
         shell: bash
         run: |
           set -euo pipefail
 
-          # Base & source URL podle eventu
+          # Base & source URL
           if [[ "${{ github.event_name }}" == "pull_request_review_comment" ]]; then
             BASE="${{ github.event.pull_request.base.ref }}"
             SRC_URL="${{ github.event.pull_request.html_url }}"
@@ -53,10 +68,9 @@ jobs:
             SRC_URL="${{ github.event.issue.html_url }}"
           fi
 
-          # Načti celé BODY (multiline) z event JSON
           BODY="$(jq -r '.comment.body // .issue.body // .pull_request.body // ""' "$GITHUB_EVENT_PATH")"
 
-          # Vytáhni vše ZA '@codex' (case-insensitive, multiline)
+          # Vytáhni vše ZA @codex (multiline, case-insensitive)
           GOAL="$(python3 - <<'PY'
 import json, re, sys
 evt = json.load(open(sys.argv[1]))
@@ -73,7 +87,6 @@ PY
             GOAL="Vyřeš požadavek uvedený v souvisejícím issue/komentáři komplexně a bezpečně. Pokud chybí detail, navrhni postup a polož doplňující otázky v PR popisu."
           fi
 
-          # Pojmenuj větev
           TS=$(date +%Y%m%d-%H%M%S)
           if [[ "${{ github.event_name }}" == "pull_request_review_comment" ]]; then
             BR="codex/pr-${{ github.event.pull_request.number }}-${TS}"
@@ -81,26 +94,19 @@ PY
             BR="codex/issue-${{ github.event.issue.number }}-${TS}"
           fi
 
-          # Ulož GOAL do souboru (multiline safe)
           printf '%s' "$GOAL" > goal.txt
 
-          # Výstupy pro další kroky (jen hodnoty bez newline)
           echo "base=$BASE"      >> "$GITHUB_OUTPUT"
           echo "branch=$BR"      >> "$GITHUB_OUTPUT"
           echo "source=$SRC_URL" >> "$GITHUB_OUTPUT"
 
-          # Diagnostika do běhu
           echo "Base: $BASE"
           echo "Branch: $BR"
           echo "Body length: $(printf %s "$BODY" | wc -c | tr -d ' ')"
           echo "Goal length: $(printf %s "$GOAL" | wc -c | tr -d ' ')"
-          echo "Goal preview (first 400 chars):"
-          echo "-----"
-          printf '%s' "$GOAL" | head -c 400 || true
-          echo
-          echo "-----"
 
       - name: Prepare branch & git identity
+        if: steps.guard.outputs.run == 'true'
         shell: bash
         env:
           BASE:   ${{ steps.ctx.outputs.base }}
@@ -113,6 +119,7 @@ PY
           git checkout -b "$BRANCH" "origin/$BASE"
 
       - name: Run Codex (make changes, commit locally)
+        if: steps.guard.outputs.run == 'true'
         id: run_codex
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -122,8 +129,6 @@ PY
         run: |
           set -euo pipefail
           test -n "${OPENAI_API_KEY:-}" || { echo "OPENAI_API_KEY chybí"; exit 1; }
-
-          # Načti cíl z goal.txt (multiline safe)
           GOAL_TXT="$(cat goal.txt)"
 
           CMD=(npx @openai/codex-cli --repo . --mode full-auto --commit --goal "$GOAL_TXT")
@@ -134,30 +139,27 @@ PY
           echo "Spouštím: ${CMD[*]}"
           "${CMD[@]}" | tee codex_output.log || true
 
-          # Pojistka: kdyby CLI změny udělalo, ale necommitlo
           if [[ -n "$(git status --porcelain)" ]]; then
             git add -A
             git commit -m "Codex: apply requested changes" || true
           fi
 
-          # Jednoduchá indikace, jestli je větev o commit napřed vůči base
+          # Máme aspoň 1 commit?
           if git rev-parse -q --verify HEAD^ >/dev/null 2>&1; then
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
           fi
-
-          # Velikost logu pro komentář
           echo "log_size=$(wc -c < codex_output.log | tr -d ' ')" >> "$GITHUB_OUTPUT"
 
       - name: Push branch to origin (ensure exists)
+        if: steps.guard.outputs.run == 'true'
         shell: bash
         env:
           BRANCH:      ${{ steps.ctx.outputs.branch }}
           HAS_CHANGES: ${{ steps.run_codex.outputs.has_changes }}
         run: |
           set -euo pipefail
-          # Když nevznikl žádný commit, uděláme marker, ať větev existuje
           if [ "${HAS_CHANGES}" != "true" ]; then
             date > .codex_marker
             git add .codex_marker
@@ -166,11 +168,12 @@ PY
           git push -u origin "$BRANCH"
 
       - name: Comment with branch & Create PR link (+ diag)
+        if: steps.guard.outputs.run == 'true'
         uses: actions/github-script@v7
         env:
-          BASE:       ${{ steps.ctx.outputs.base }}
-          BRANCH:     ${{ steps.ctx.outputs.branch }}
-          LOG_SIZE:   ${{ steps.run_codex.outputs.log_size }}
+          BASE:     ${{ steps.ctx.outputs.base }}
+          BRANCH:   ${{ steps.ctx.outputs.branch }}
+          LOG_SIZE: ${{ steps.run_codex.outputs.log_size }}
         with:
           script: |
             const issue_number = context.payload.issue
@@ -199,6 +202,7 @@ PY
             });
 
       - name: Comment FULL Codex log (chunked)
+        if: steps.guard.outputs.run == 'true'
         uses: actions/github-script@v7
         with:
           script: |
