@@ -57,7 +57,7 @@ jobs:
           GITHUB_TOKEN:     ${{ secrets.GITHUB_TOKEN }}
           # Volitelné: pokud máš tyto hodnoty, přidej je do repo/organization secrets
           OPENAI_ORG_ID:    ${{ secrets.OPENAI_ORG_ID }}
-          OPENAI_PROJECT_ID:${{ secrets.OPENAI_PROJECT_ID }}
+          OPENAI_PROJECT_ID: ${{ secrets.OPENAI_PROJECT_ID }}
         shell: bash
         run: |
           set -euo pipefail
