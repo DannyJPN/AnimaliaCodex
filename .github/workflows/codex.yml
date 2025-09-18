@@ -1,46 +1,24 @@
-name: Codex Orchestrator
+name: Codex Code
 
 on:
-  # spuštění přes label v issue
-  issues:
-    types: [opened, edited, labeled, reopened]
-  # spuštění přes komentář v issue/PR (např. "@codex run" nebo "@codex plan")
   issue_comment:
     types: [created]
-  # na otevřený / synchronizovaný PR – review/opravy
-  pull_request:
-    types: [opened, synchronize, reopened]
-  # manuální spuštění s parametry
-  workflow_dispatch:
-    inputs:
-      goal:
-        description: "Cíl pro Codex (volitelně)"
-        required: false
-        type: string
-      mode:
-        description: "Režim (plan|edit|full-auto)"
-        required: false
-        default: "plan"
-        type: choice
-        options: [plan, edit, full-auto]
-  # periodický běh (např. údržba, refaktor tipy)
-  schedule:
-    - cron: "0 4 * * 1" # každé pondělí 04:00 UTC
-
-permissions:
-  contents: write
-  pull-requests: write
-  issues: write
-
-env:
-  NODE_OPTIONS: "--max-old-space-size=4096"
+  pull_request_review_comment:
+    types: [created]
+  issues:
+    types: [opened, assigned]
 
 jobs:
   codex:
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@codex')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@codex')) ||
+      (github.event_name == 'issues' && contains(github.event.issue.body, '@codex'))
     runs-on: ubuntu-latest
-    concurrency:
-      group: codex-${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: false
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
 
     steps:
       - name: Checkout
@@ -58,140 +36,143 @@ jobs:
           npm i -g @openai/codex-cli || true
           npx @openai/codex-cli --version || true
 
-      - name: Derive trigger intent
-        id: intent
+      - name: Derive context (base branch, branch name, goal)
+        id: ctx
         shell: bash
         run: |
-          # Defaulty
-          MODE="plan"
-          GOAL="Analyzuj repo a připrav návrh změn."
-          SOURCE_URL=""
+          set -euo pipefail
 
-          if [[ "${{ github.event_name }}" == "issues" ]]; then
-            SOURCE_URL="${{ github.event.issue.html_url }}"
-            # pokud má issue label 'codex', jedeme víc automaticky
-            if echo "${{ toJson(github.event.issue.labels) }}" | grep -qi '"name":"codex"'; then
-              MODE="full-auto"
-              GOAL="Vyřeš uvedené issue a připrav PR (včetně testů)."
-            else
-              MODE="plan"
-              GOAL="Zpracuj analýzu k tomuto issue a navrhni konkrétní TODO a PR plán."
-            fi
-          elif [[ "${{ github.event_name }}" == "issue_comment" ]]; then
-            SOURCE_URL="${{ github.event.issue.html_url }}"
+          if [[ "${{ github.event_name }}" == "pull_request_review_comment" ]]; then
+            BASE="${{ github.event.pull_request.base.ref }}"
+            SRC_URL="${{ github.event.pull_request.html_url }}"
             BODY="${{ github.event.comment.body }}"
-            if echo "$BODY" | grep -qi "@codex run"; then
-              MODE="full-auto"
-              GOAL="Vyřeš issue/PR dle kontextu a připrav commit/PR."
-            elif echo "$BODY" | grep -qi "@codex edit"; then
-              MODE="edit"
-              GOAL="Proveď cílené úpravy podle komentáře."
-            elif echo "$BODY" | grep -qi "@codex plan"; then
-              MODE="plan"
-              GOAL="Připrav plán, diffy a postup krok za krokem."
-            fi
-          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            SOURCE_URL="${{ github.event.pull_request.html_url }}"
-            MODE="plan"
-            GOAL="Proveď review tohoto PR, navrhni změny a případně je rovnou proveď."
-          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            MODE="${{ github.event.inputs.mode }}"
-            GOAL="${{ github.event.inputs.goal }}"
-          elif [[ "${{ github.event_name }}" == "schedule" ]]; then
-            MODE="plan"
-            GOAL="Najdi technický dluh, navrhni refaktor a vytvoř úlohy/PR návrhy."
+          elif [[ "${{ github.event_name }}" == "issue_comment" ]]; then
+            BASE="${{ github.event.repository.default_branch }}"
+            SRC_URL="${{ github.event.issue.html_url }}"
+            BODY="${{ github.event.comment.body }}"
+          else
+            BASE="${{ github.event.repository.default_branch }}"
+            SRC_URL="${{ github.event.issue.html_url }}"
+            BODY="${{ github.event.issue.body }}"
           fi
 
-          echo "mode=$MODE"   >> "$GITHUB_OUTPUT"
-          echo "goal=$GOAL"   >> "$GITHUB_OUTPUT"
-          echo "source=$SOURCE_URL" >> "$GITHUB_OUTPUT"
+          TS=$(date +%Y%m%d-%H%M%S)
+          if [[ "${{ github.event_name }}" == "issue_comment" ]]; then
+            BR="codex/issue-${{ github.event.issue.number }}-${TS}"
+          elif [[ "${{ github.event_name }}" == "pull_request_review_comment" ]]; then
+            BR="codex/pr-${{ github.event.pull_request.number }}-${TS}"
+          else
+            BR="codex/issue-${{ github.event.issue.number }}-${TS}"
+          fi
 
-      - name: Run Codex
-        id: codex
+          GOAL=$(echo "$BODY" | sed -n 's/.*@codex[[:space:]]*//p' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+          if [[ -z "$GOAL" ]]; then
+            GOAL="Vyřeš požadavek uvedený v souvisejícím issue/komentáři komplexně a bezpečně."
+          fi
+
+          echo "base=$BASE"   >> "$GITHUB_OUTPUT"
+          echo "branch=$BR"   >> "$GITHUB_OUTPUT"
+          echo "goal=$GOAL"   >> "$GITHUB_OUTPUT"
+          echo "source=$SRC_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare branch & git identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin "${{ steps.ctx.outputs.base }}" --depth=1
+          git checkout -b "${{ steps.ctx.outputs.branch }}" "origin/${{ steps.ctx.outputs.base }}"
+
+      - name: Run Codex (make changes, commit locally)
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GITHUB_TOKEN:    ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Bezpečné defaulty, ať se to nespustí bez klíče
-          test -n "$OPENAI_API_KEY" || { echo "OPENAI_API_KEY chybí"; exit 1; }
-
-          # Sestav příkaz – uprav dle své instalace CLI.
-          CMD="npx @openai/codex-cli \
-            --repo . \
-            --goal \"${{ steps.intent.outputs.goal }}\" \
-            --mode \"${{ steps.intent.outputs.mode }}\""
-
-          if [ -n "${{ steps.intent.outputs.source }}" ]; then
-            CMD="$CMD --read \"issue:${{ steps.intent.outputs.source }}\""
-          fi
-
-          echo "Spouštím: $CMD"
-          eval $CMD | tee codex_output.log || true
-
-      - name: Upload Codex log (artifact)
-        uses: actions/upload-artifact@v4
-        with:
-          name: codex-output
-          path: codex_output.log
-          if-no-files-found: ignore
-
-      - name: Comment back to issue/PR (summary)
-        if: ${{ steps.intent.outputs.source != '' }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          URL="${{ steps.intent.outputs.source }}"
-          BODY="✅ Codex běh dokončen\n\n**Režim:** ${{ steps.intent.outputs.mode }}\n**Cíl:** ${{ steps.intent.outputs.goal }}\n\nLog je přiložen jako artifact \`codex-output\`."
-          # Rozlišíme, zda to je issue nebo PR (obojí má /issues/ v API)
-          API_URL=$(echo "$URL" | sed 's#https://github.com/#https://api.github.com/repos/#; s#/pull/#/issues/#')
-          COMMENTS="$API_URL/comments"
-          curl -sS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
-            "$COMMENTS" -d "$(jq -cn --arg body "$BODY" '{body:$body}')" >/dev/null
+          set -euo pipefail
+          test -n "${OPENAI_API_KEY:-}" || { echo "OPENAI_API_KEY chybí"; exit 1; }
 
-      - name: Comment FULL Codex log to issue/PR
-        if: ${{ (github.event_name == 'issues' || github.event_name == 'issue_comment' || github.event_name == 'pull_request') && steps.intent.outputs.source != '' }}
+          CMD=(npx @openai/codex-cli
+               --repo .
+               --goal "${{ steps.ctx.outputs.goal }}"
+               --mode "full-auto"
+               --read "issue:${{ steps.ctx.outputs.source }}"
+               --commit)
+
+          echo "Spouštím: ${CMD[*]}"
+          "${CMD[@]}" | tee codex_output.log || true
+
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git add -A
+            git commit -m "Codex: apply requested changes"
+          fi
+
+      - name: Push branch to origin
+        shell: bash
+        run: |
+          set -euo pipefail
+          git push -u origin "${{ steps.ctx.outputs.branch }}"
+
+      - name: Comment with branch & Create PR link
         uses: actions/github-script@v7
         with:
           script: |
-            const fs = require('fs');
-            const core = require('@actions/core');
-
-            const path = 'codex_output.log';
-            if (!fs.existsSync(path)) {
-              core.setFailed('codex_output.log not found');
-              return;
-            }
-
-            const body = fs.readFileSync(path, 'utf8');
-            const MAX = 60000; // bezpečný limit pod hranicí GitHubu (~65k)
-            const total = Math.ceil(body.length / MAX);
-
             const issue_number = context.payload.issue
               ? context.payload.issue.number
               : (context.payload.pull_request ? context.payload.pull_request.number : null);
+            if (!issue_number) { core.setFailed('No issue/PR to comment on.'); return; }
 
-            if (!issue_number) {
-              core.setFailed('No issue/PR in this event to comment on.');
-              return;
-            }
+            const base   = `${{ steps.ctx.outputs.base }}`;
+            const branch = `${{ steps.ctx.outputs.branch }}`;
+            const prUrl  = `https://github.com/${context.repo.owner}/${context.repo.repo}/compare/${base}...${branch}?expand=1`;
 
-            // Úvodní hlavička
+            const body =
+`✅ **Codex hotovo**
+- Větev: \`${branch}\`
+- Základní větev: \`${base}\`
+- 👉 [Create PR](${prUrl})
+
+Plný log je v následujících komentářích.`;
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number,
-              body: `📎 **Codex log** – plná délka, rozděleno do ${total} částí (po ~${MAX} znacích).`
+              body
+            });
+
+      - name: Comment FULL Codex log (chunked)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = 'codex_output.log';
+            if (!fs.existsSync(path)) { core.setFailed('codex_output.log not found'); return; }
+
+            const whole = fs.readFileSync(path, 'utf8');
+            const MAX = 60000;
+            const total = Math.max(1, Math.ceil(whole.length / MAX));
+
+            const issue_number = context.payload.issue
+              ? context.payload.issue.number
+              : (context.payload.pull_request ? context.payload.pull_request.number : null);
+            if (!issue_number) { core.setFailed('No issue/PR to comment on.'); return; }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number,
+              body: `📎 **Codex log – plná délka** (rozsekáno do ${total} částí):`
             });
 
             for (let i = 0; i < total; i++) {
-              const start = i * MAX;
-              const chunk = body.slice(start, start + MAX);
-              const header = `**Část ${i+1}/${total}**\n\n`;
+              const chunk = whole.slice(i * MAX, (i + 1) * MAX);
+              const body = `**Část ${i + 1}/${total}**\n\n\`\`\`text\n${chunk}\n\`\`\``;
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number,
-                body: `${header}\n\`\`\`text\n${chunk}\n\`\`\``
+                body
               });
             }
