@@ -1,4 +1,5 @@
 name: OpenAI Codex
+
 on:
   issue_comment:
     types: [created]
@@ -18,21 +19,32 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
+
       - name: Install OpenAI Codex CLI
         run: npm install -g @openai/codex
-      - name: Run OpenAI Codex
+
+      - name: Run OpenAI Codex (non-interactive)
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN:   ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
         run: |
-          git config --global user.name "OpenAI Codex"
-          git config --global user.email "codex@openai.com"
-          
+          set -euo pipefail
+
+          # Lokální git identita (na CI nepoužívej --global)
+          git config user.name  "OpenAI Codex"
+          git config user.email "codex@openai.com"
+
+          # Vytáhni text zadání podle typu eventu
           if [[ "${{ github.event_name }}" == "issue_comment" ]]; then
             PROMPT="${{ github.event.comment.body }}"
           elif [[ "${{ github.event_name }}" == "pull_request_review_comment" ]]; then
@@ -40,9 +52,20 @@ jobs:
           else
             PROMPT="${{ github.event.issue.body }}"
           fi
-          
-          CLEAN_PROMPT=$(echo "$PROMPT" | sed 's/@codex//g' | sed 's/^[[:space:]]*//')
-          echo "🤖 OpenAI Codex processing: $CLEAN_PROMPT"
-          
-          # Use quiet mode for non-interactive execution
-          codex -q "$CLEAN_PROMPT" || echo "Codex execution completed"
+
+          # Odstraň '@codex' (case-insensitive) a ořež bílé znaky
+          CLEAN_PROMPT="$(printf '%s' "$PROMPT" | sed 's/@codex//Ig' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
+
+          # Fallback, pokud po @codex nic nebylo
+          if [[ -z "$CLEAN_PROMPT" ]]; then
+            CLEAN_PROMPT="Proveď požadavek popsaný v souvisejícím issue/komentáři co nejbezpečněji; pokud je specifikace vágní, navrhni konkrétní TODO a diffy."
+          fi
+
+          echo "🤖 OpenAI Codex processing:"
+          echo "-----"
+          printf '%s\n' "$CLEAN_PROMPT"
+          echo "-----"
+
+          # Neinteraktivní běh přes subpříkaz 'exec' (žádné -q, ten Codex CLI nezná)
+          # Volitelně lze přidat model: `codex --model o4-mini exec "..."`
+          codex exec "$CLEAN_PROMPT" | tee codex_output.log || true
