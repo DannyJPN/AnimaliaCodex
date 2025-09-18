@@ -1,12 +1,23 @@
-name: OpenAI Codex Debug
+name: OpenAI Codex
 on:
   issue_comment:
     types: [created]
+  pull_request_review_comment:
+    types: [created]
+  issues:
+    types: [opened, assigned]
 
 jobs:
-  codex-debug:
-    if: contains(github.event.comment.body, '@codex-debug')
+  codex:
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@codex')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@codex')) ||
+      (github.event_name == 'issues' && contains(github.event.issue.body, '@codex'))
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -14,23 +25,24 @@ jobs:
           node-version: '20'
       - name: Install OpenAI Codex CLI
         run: npm install -g @openai/codex
-      - name: Debug Codex
+      - name: Run OpenAI Codex
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "=== Codex version ==="
-          codex --version || echo "Version failed"
+          git config --global user.name "OpenAI Codex"
+          git config --global user.email "codex@openai.com"
           
-          echo "=== Codex help ==="
-          codex --help || echo "Help failed"
+          if [[ "${{ github.event_name }}" == "issue_comment" ]]; then
+            PROMPT="${{ github.event.comment.body }}"
+          elif [[ "${{ github.event_name }}" == "pull_request_review_comment" ]]; then
+            PROMPT="${{ github.event.comment.body }}"
+          else
+            PROMPT="${{ github.event.issue.body }}"
+          fi
           
-          echo "=== Network test ==="
-          curl -I https://api.openai.com || echo "OpenAI API unreachable"
+          CLEAN_PROMPT=$(echo "$PROMPT" | sed 's/@codex//g' | sed 's/^[[:space:]]*//')
+          echo "🤖 OpenAI Codex processing: $CLEAN_PROMPT"
           
-          echo "=== Environment ==="
-          echo "OPENAI_API_KEY length: ${#OPENAI_API_KEY}"
-          echo "HOME: $HOME"
-          ls -la $HOME || echo "Home listing failed"
-          
-          echo "=== Simple test ==="
-          echo "hello world" | codex || echo "Simple test failed"
+          # Use quiet mode for non-interactive execution
+          codex -q "$CLEAN_PROMPT" || echo "Codex execution completed"
