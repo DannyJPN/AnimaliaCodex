@@ -9,6 +9,7 @@ API project that powers PZI backend.
 - To configure database connection for local development, it is preferred to use `user-secrets` provided by .net framework. They can be set from Vistual Stuio UI or from command line:
   - `dotnet user-secrets set "ConnectionStrings:Default" "<<VALUE>>"`
 - We generally use shared instance of database (managing imported data is quite difficult to have per-user DBs), value for connection string can be provided on-demand.
+- The API now targets a PostgreSQL backend. Ensure the connection string you provide uses the PostgreSQL format (for example, `Host=localhost;Port=5432;Database=pzi;Username=pzi;Password=secret`).
 
 ## Configuration values for container
 
