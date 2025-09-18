@@ -29,38 +29,43 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install OpenAI Codex CLI
-        run: npm install -g @openai/codex@latest
+      - name: Install OpenAI Codex CLI (latest) + show version
+        shell: bash
+        run: |
+          npm install -g @openai/codex@latest
+          codex --version || true
 
-      - name: Sanity check OpenAI API key against chat (gpt-4o)
+      # Ověříme, že tentýž model jede přes REST s aktuálním klíčem
+      - name: Sanity check OpenAI API key (chat gpt-5-chat-latest)
         env:
-          OPENAI_API_KEY:   ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_KEY:    ${{ secrets.OPENAI_API_KEY }}
           OPENAI_PROJECT_ID: ${{ secrets.OPENAI_PROJECT_ID }}
         shell: bash
         run: |
           if [ -z "${OPENAI_API_KEY:-}" ]; then
             echo "OPENAI_API_KEY secret chybí"; exit 1
           fi
-          echo "HTTP /v1/chat/completions (gpt-4o):"
+          echo "HTTP /v1/chat/completions (gpt-5-chat-latest):"
           curl -sS -o /dev/null -w "%{http_code}\n" \
             -H "Authorization: Bearer $OPENAI_API_KEY" \
             ${OPENAI_PROJECT_ID:+-H "OpenAI-Project: $OPENAI_PROJECT_ID"} \
             -H "Content-Type: application/json" \
-            -d '{ "model": "gpt-4o", "messages": [ { "role": "user", "content": "ping" } ] }' \
+            -d '{ "model": "gpt-5-chat-latest", "messages": [ { "role": "user", "content": "ping" } ] }' \
             https://api.openai.com/v1/chat/completions
 
       - name: Run OpenAI Codex (non-interactive, explicit model)
         env:
-          OPENAI_API_KEY:   ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_KEY:    ${{ secrets.OPENAI_API_KEY }}
           OPENAI_PROJECT_ID: ${{ secrets.OPENAI_PROJECT_ID }}
-          GITHUB_TOKEN:     ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_ORG_ID:     ${{ secrets.OPENAI_ORG_ID }}
+          GITHUB_TOKEN:      ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          # Lokální git identita
+          # Lokální git identita (ne --global)
           git config user.name  "OpenAI Codex"
           git config user.email "codex@openai.com"
 
-          # Vytáhni text zadání
+          # Vytáhni zadání z eventu
           if [[ "${{ github.event_name }}" == "issue_comment" ]]; then
             PROMPT="${{ github.event.comment.body }}"
           elif [[ "${{ github.event_name }}" == "pull_request_review_comment" ]]; then
@@ -76,14 +81,15 @@ jobs:
           fi
 
           echo "🤖 OpenAI Codex processing:"
-          echo "-----"
-          printf '%s\n' "$CLEAN_PROMPT"
-          echo "-----"
+          echo "-----"; printf '%s\n' "$CLEAN_PROMPT"; echo "-----"
 
-          # Spuštění Codex CLI – vynutíme provider+model (vyhne se defaultu 'gpt-5')
-          # Pozn.: CLI si vezme OPENAI_API_KEY z env. Projektový scope předává API automaticky
-          # přes hlavičku, Codex CLI to zvládá interně. Kdyby ne, fallback je přes curl sanity check výše.
-          codex --model gpt-4o exec "$CLEAN_PROMPT" | tee codex_output.log || true
+          # Vynutit API-key auth v configu (bez web loginu)
+          codex config set preferred_auth_method apikey || true
+          [ -n "${OPENAI_ORG_ID:-}" ]     && codex config set openai.organization "$OPENAI_ORG_ID" || true
+          [ -n "${OPENAI_PROJECT_ID:-}" ] && codex config set openai.project "$OPENAI_PROJECT_ID" || true
+
+          # DŮLEŽITÉ: model specifikuj až ZA 'exec'
+          codex exec -m gpt-5-chat-latest "$CLEAN_PROMPT" | tee codex_output.log || true
 
       - name: Comment FULL Codex log (single chunk)
         uses: actions/github-script@v7
