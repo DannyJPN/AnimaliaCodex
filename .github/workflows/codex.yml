@@ -35,7 +35,7 @@ jobs:
           npm install -g @openai/codex@latest
           codex --version || true
 
-      # Ověříme, že tentýž model jede přes REST s aktuálním klíčem
+      # Ověříme stejný model přes REST – MUSÍ vrátit 200, jinak je problém s klíčem/projektem
       - name: Sanity check OpenAI API key (chat gpt-5-chat-latest)
         env:
           OPENAI_API_KEY:    ${{ secrets.OPENAI_API_KEY }}
@@ -53,7 +53,7 @@ jobs:
             -d '{ "model": "gpt-5-chat-latest", "messages": [ { "role": "user", "content": "ping" } ] }' \
             https://api.openai.com/v1/chat/completions
 
-      - name: Run OpenAI Codex (non-interactive, explicit model)
+      - name: Run OpenAI Codex (non-interactive, explicit model + apikey auth + project)
         env:
           OPENAI_API_KEY:    ${{ secrets.OPENAI_API_KEY }}
           OPENAI_PROJECT_ID: ${{ secrets.OPENAI_PROJECT_ID }}
@@ -83,13 +83,16 @@ jobs:
           echo "🤖 OpenAI Codex processing:"
           echo "-----"; printf '%s\n' "$CLEAN_PROMPT"; echo "-----"
 
-          # Vynutit API-key auth v configu (bez web loginu)
-          codex config set preferred_auth_method apikey || true
-          [ -n "${OPENAI_ORG_ID:-}" ]     && codex config set openai.organization "$OPENAI_ORG_ID" || true
-          [ -n "${OPENAI_PROJECT_ID:-}" ] && codex config set openai.project "$OPENAI_PROJECT_ID" || true
+          # Spusť Codex s přímými konfiguracemi:
+          # - přinutit autentizaci API klíčem
+          # - u projektového klíče dát project ID (jinak 401)
+          # - model specifikovat AŽ za 'exec'
+          EXTRA_CFG=()
+          EXTRA_CFG+=(--config preferred_auth_method=apikey)
+          [ -n "${OPENAI_ORG_ID:-}" ]     && EXTRA_CFG+=(--config openai.organization="${OPENAI_ORG_ID}")
+          [ -n "${OPENAI_PROJECT_ID:-}" ] && EXTRA_CFG+=(--config openai.project="${OPENAI_PROJECT_ID}")
 
-          # DŮLEŽITÉ: model specifikuj až ZA 'exec'
-          codex exec -m gpt-5-chat-latest "$CLEAN_PROMPT" | tee codex_output.log || true
+          codex "${EXTRA_CFG[@]}" exec -m gpt-5-chat-latest "$CLEAN_PROMPT" | tee codex_output.log || true
 
       - name: Comment FULL Codex log (single chunk)
         uses: actions/github-script@v7
