@@ -44,92 +44,135 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Base, body source URL
           if [[ "${{ github.event_name }}" == "pull_request_review_comment" ]]; then
             BASE="${{ github.event.pull_request.base.ref }}"
             SRC_URL="${{ github.event.pull_request.html_url }}"
-            BODY="${{ github.event.comment.body }}"
-          elif [[ "${{ github.event_name }}" == "issue_comment" ]]; then
-            BASE="${{ github.event.repository.default_branch }}"
-            SRC_URL="${{ github.event.issue.html_url }}"
-            BODY="${{ github.event.comment.body }}"
           else
             BASE="${{ github.event.repository.default_branch }}"
             SRC_URL="${{ github.event.issue.html_url }}"
-            BODY="${{ github.event.issue.body }}"
           fi
 
+          # Načti celé body z event JSON (multiline)
+          BODY="$(jq -r '.comment.body // .issue.body // .pull_request.body // ""' "$GITHUB_EVENT_PATH")"
+
+          # Vytáhni vše ZA @codex (case-insensitive, multiline)
+          GOAL="$(python3 - <<'PY'
+import json, re, sys
+evt = json.load(open(sys.argv[1]))
+body = (evt.get('comment',{}).get('body') or
+        evt.get('issue',{}).get('body') or
+        evt.get('pull_request',{}).get('body') or '')
+m = re.search(r'@codex\\b(.*)', body, re.I|re.S)
+print(m.group(1).strip() if m else '')
+PY
+"$GITHUB_EVENT_PATH"
+)"
+
+          # fallback, pokud po @codex nic nebylo
+          if [[ -z "$GOAL" ]]; then
+            GOAL="Vyřeš požadavek uvedený v souvisejícím issue/komentáři komplexně a bezpečně. Pokud chybí detail, navrhni postup a polož doplňující otázky v PR popisu."
+          fi
+
+          # Větev podle kontextu
           TS=$(date +%Y%m%d-%H%M%S)
-          if [[ "${{ github.event_name }}" == "issue_comment" ]]; then
-            BR="codex/issue-${{ github.event.issue.number }}-${TS}"
-          elif [[ "${{ github.event_name }}" == "pull_request_review_comment" ]]; then
+          if [[ "${{ github.event_name }}" == "pull_request_review_comment" ]]; then
             BR="codex/pr-${{ github.event.pull_request.number }}-${TS}"
           else
             BR="codex/issue-${{ github.event.issue.number }}-${TS}"
           fi
 
-          # Vezmi text ZA '@codex'
-          GOAL=$(echo "$BODY" | sed -n 's/.*@codex[[:space:]]*//p' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
-          if [[ -z "$GOAL" ]]; then
-            GOAL="Vyřeš požadavek uvedený v souvisejícím issue/komentáři komplexně a bezpečně."
-          fi
+          # Debug do běhového logu
+          echo "Base: $BASE"
+          echo "Branch: $BR"
+          echo "Body length: ${#BODY}"
+          echo "Goal length: ${#GOAL}"
+          echo "Goal preview:"
+          echo "-----"
+          echo "${GOAL:0:400}"
+          echo "-----"
 
-          echo "base=$BASE"      >> "$GITHUB_OUTPUT"
-          echo "branch=$BR"      >> "$GITHUB_OUTPUT"
-          echo "goal=$GOAL"      >> "$GITHUB_OUTPUT"
-          echo "source=$SRC_URL" >> "$GITHUB_OUTPUT"
+          # Výstupy pro další kroky
+          {
+            echo "base=$BASE"
+            echo "branch=$BR"
+            echo "goal<<EOF"
+            echo "$GOAL"
+            echo "EOF"
+            echo "source=$SRC_URL"
+            echo "body_len=${#BODY}"
+            echo "goal_len=${#GOAL}"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Prepare branch & git identity
         shell: bash
+        env:
+          BASE: ${{ steps.ctx.outputs.base }}
+          BRANCH: ${{ steps.ctx.outputs.branch }}
         run: |
           set -euo pipefail
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin '${{ steps.ctx.outputs.base }}' --depth=1
-          git checkout -b '${{ steps.ctx.outputs.branch }}' 'origin/${{ steps.ctx.outputs.base }}'
+          git fetch origin "$BASE" --depth=1
+          git checkout -b "$BRANCH" "origin/$BASE"
 
       - name: Run Codex (make changes, commit locally)
+        id: run_codex
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GITHUB_TOKEN:   ${{ secrets.GITHUB_TOKEN }}
-          GOAL_TXT:       '${{ steps.ctx.outputs.goal }}'
-          SOURCE_URL:     '${{ steps.ctx.outputs.source }}'
+          GOAL_TXT:       ${{ steps.ctx.outputs.goal }}
+          SOURCE_URL:     ${{ steps.ctx.outputs.source }}
         shell: bash
         run: |
           set -euo pipefail
           test -n "${OPENAI_API_KEY:-}" || { echo "OPENAI_API_KEY chybí"; exit 1; }
 
-          CMD=(npx @openai/codex-cli
-               --repo .
-               --goal "$GOAL_TXT"
-               --mode "full-auto"
-               --commit)
-
+          # Slož příkaz
+          CMD=(npx @openai/codex-cli --repo . --mode full-auto --commit --goal "$GOAL_TXT")
           if [ -n "${SOURCE_URL}" ]; then
             CMD+=("--read" "issue:${SOURCE_URL}")
           fi
 
           echo "Spouštím: ${CMD[*]}"
+          # Samotný běh
           "${CMD[@]}" | tee codex_output.log || true
 
-          # pojistka: kdyby CLI neudělalo commit
+          # Pojistka: kdyby CLI nic nezcommitovalo, ale změny vznikly
           if [[ -n "$(git status --porcelain)" ]]; then
             git add -A
-            git commit -m "Codex: apply requested changes"
+            git commit -m "Codex: apply requested changes" || true
           fi
 
-      - name: Push branch to origin
-        env:
-          BRANCH: '${{ steps.ctx.outputs.branch }}'
+          # Uložit stručnou diagnostiku pro další krok
+          echo "has_changes=$(if git diff --quiet HEAD^ HEAD 2>/dev/null; then echo false; else echo true; fi)" >> "$GITHUB_OUTPUT"
+          echo "log_size=$(wc -c < codex_output.log | tr -d ' ')" >> "$GITHUB_OUTPUT"
+
+      - name: Push branch to origin (even if empty)
         shell: bash
+        env:
+          BRANCH: ${{ steps.ctx.outputs.branch }}
         run: |
           set -euo pipefail
-          git push -u origin "${BRANCH}"
+          # Pokud vůbec nejsou commity na větvi (např. cli nic neudělalo), vytvoříme aspoň prázdnou „marker“ změnu,
+          # ať má uživatel na co kliknout (stejně jako Claude větve zakládá).
+          if ! git rev-parse --verify HEAD >/dev/null 2>&1; then
+            echo "No HEAD? creating initial commit"
+            date > .codex_marker
+            git add .codex_marker
+            git commit -m "Codex: marker commit"
+          fi
+          git push -u origin "$BRANCH"
 
-      - name: Comment with branch & Create PR link
+      - name: Comment with branch & Create PR link (+ diag)
         uses: actions/github-script@v7
         env:
-          BASE:   '${{ steps.ctx.outputs.base }}'
-          BRANCH: '${{ steps.ctx.outputs.branch }}'
+          BASE:      ${{ steps.ctx.outputs.base }}
+          BRANCH:    ${{ steps.ctx.outputs.branch }}
+          GOAL_LEN:  ${{ steps.ctx.outputs.goal_len }}
+          BODY_LEN:  ${{ steps.ctx.outputs.body_len }}
+          HAS_CHG:   ${{ steps.run_codex.outputs.has_changes }}
+          LOG_SIZE:  ${{ steps.run_codex.outputs.log_size }}
         with:
           script: |
             const issue_number = context.payload.issue
@@ -141,13 +184,21 @@ jobs:
             const branch = process.env.BRANCH;
             const prUrl  = `https://github.com/${context.repo.owner}/${context.repo.repo}/compare/${base}...${branch}?expand=1`;
 
+            const diag = [
+              `Diag: body_len=${process.env.BODY_LEN}, goal_len=${process.env.GOAL_LEN}, log_size=${process.env.LOG_SIZE}, has_changes=${process.env.HAS_CHG}`
+            ].join('\n');
+
             const body = [
               '✅ **Codex hotovo**',
               `- Větev: \`${branch}\``,
               `- Základní větev: \`${base}\``,
               `- 👉 [Create PR](${prUrl})`,
               '',
-              'Plný log je v následujících komentářích.'
+              diag,
+              '',
+              (process.env.GOAL_LEN === '0'
+                ? '⚠️ Zdá se, že po `@codex` nebyl v těle žádný text. Použil jsem fallback zadání.'
+                : '')
             ].join('\n');
 
             await github.rest.issues.createComment({
@@ -163,16 +214,24 @@ jobs:
           script: |
             const fs = require('fs');
             const path = 'codex_output.log';
-            if (!fs.existsSync(path)) { core.setFailed('codex_output.log not found'); return; }
-
-            const whole = fs.readFileSync(path, 'utf8');
-            const MAX = 60000; // bezpečně pod limitem GitHubu (~65k)
-            const total = Math.max(1, Math.ceil(whole.length / MAX));
-
             const issue_number = context.payload.issue
               ? context.payload.issue.number
               : (context.payload.pull_request ? context.payload.pull_request.number : null);
             if (!issue_number) { core.setFailed('No issue/PR to comment on.'); return; }
+
+            if (!fs.existsSync(path)) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number,
+                body: '⚠️ Nebyl vytvořen žádný log (soubor `codex_output.log` chybí).'
+              });
+              return;
+            }
+
+            const whole = fs.readFileSync(path, 'utf8');
+            const MAX = 60000;
+            const total = Math.max(1, Math.ceil(whole.length / MAX));
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
