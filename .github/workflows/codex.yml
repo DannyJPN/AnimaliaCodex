@@ -25,6 +25,16 @@ jobs:
           node-version: '20'
       - name: Install OpenAI Codex CLI
         run: npm install -g @openai/codex
+      - name: Setup Codex config
+        run: |
+          mkdir -p ~/.codex
+          cat > ~/.codex/config.toml << EOF
+          [provider.openai]
+          api_key = "${{ secrets.OPENAI_API_KEY }}"
+          
+          [settings]
+          approval_policy = "full-auto"
+          EOF
       - name: Run OpenAI Codex
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -44,4 +54,4 @@ jobs:
           CLEAN_PROMPT=$(echo "$PROMPT" | sed 's/@codex//g' | sed 's/^[[:space:]]*//')
           echo "🤖 OpenAI Codex processing: $CLEAN_PROMPT"
           
-          codex --full-auto "$CLEAN_PROMPT"
+          codex "$CLEAN_PROMPT"
