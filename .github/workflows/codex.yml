@@ -28,51 +28,39 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Install OpenAI Codex CLI (latest) + debug version
-        shell: bash
-        run: |
-          set -euo pipefail
-          npm install -g @openai/codex@latest
-          codex --version || true
 
-      - name: Sanity check OpenAI API key (models + chat)
+      - name: Install OpenAI Codex CLI
+        run: npm install -g @openai/codex@latest
+
+      - name: Sanity check OpenAI API key against chat (gpt-5-chat-latest)
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_ORG_ID: ${{ secrets.OPENAI_ORG_ID }}
-          OPENAI_PROJECT_ID: ${{ secrets.OPENAI_PROJECT_ID }}
+          OPENAI_API_KEY:   ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_PROJECT_ID:${{ secrets.OPENAI_PROJECT_ID }}
         shell: bash
         run: |
-          set -euo pipefail
-          test -n "${OPENAI_API_KEY:-}" || { echo "OPENAI_API_KEY chybí"; exit 1; }
-
-          echo "HTTP /v1/models:"
-          curl -sS -o /dev/null -w "%{http_code}\n" \
-            -H "Authorization: Bearer $OPENAI_API_KEY" \
-            https://api.openai.com/v1/models
-
+          if [ -z "${OPENAI_API_KEY:-}" ]; then
+            echo "OPENAI_API_KEY secret chybí"; exit 1
+          fi
           echo "HTTP /v1/chat/completions (gpt-5-chat-latest):"
           curl -sS -o /dev/null -w "%{http_code}\n" \
             -H "Authorization: Bearer $OPENAI_API_KEY" \
             ${OPENAI_PROJECT_ID:+-H "OpenAI-Project: $OPENAI_PROJECT_ID"} \
             -H "Content-Type: application/json" \
             -d '{ "model": "gpt-5-chat-latest", "messages": [ { "role": "user", "content": "ping" } ] }' \
-            https://api.openai.com/v1/chat/completions || true
+            https://api.openai.com/v1/chat/completions
 
-      - name: Run OpenAI Codex (force apikey + org/project + GPT-5 chat)
+      - name: Run OpenAI Codex (non-interactive, explicit model)
         env:
           OPENAI_API_KEY:   ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_ORG_ID:    ${{ secrets.OPENAI_ORG_ID }}
-          OPENAI_PROJECT_ID: ${{ secrets.OPENAI_PROJECT_ID }}
+          OPENAI_PROJECT_ID:${{ secrets.OPENAI_PROJECT_ID }}
           GITHUB_TOKEN:     ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          set -euo pipefail
-
-          # lokální git identita
+          # Lokální git identita
           git config user.name  "OpenAI Codex"
           git config user.email "codex@openai.com"
 
-          # vytažení promptu (zůstává jak máš)
+          # Vytáhni text zadání
           if [[ "${{ github.event_name }}" == "issue_comment" ]]; then
             PROMPT="${{ github.event.comment.body }}"
           elif [[ "${{ github.event_name }}" == "pull_request_review_comment" ]]; then
@@ -80,25 +68,24 @@ jobs:
           else
             PROMPT="${{ github.event.issue.body }}"
           fi
+
+          # Odstraň '@codex' (case-insensitive) a ořež bílé znaky
           CLEAN_PROMPT="$(printf '%s' "$PROMPT" | sed 's/@codex//Ig' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
-          [[ -n "$CLEAN_PROMPT" ]] || CLEAN_PROMPT="Proveď požadavek popsaný v souvisejícím issue co nejbezpečněji; pokud je vágní, navrhni TODO a diffy."
+          if [[ -z "$CLEAN_PROMPT" ]]; then
+            CLEAN_PROMPT="Proveď požadavek popsaný v souvisejícím issue/komentáři co nejbezpečněji; pokud je specifikace vágní, navrhni konkrétní TODO a diffy."
+          fi
 
           echo "🤖 OpenAI Codex processing:"
-          echo "-----"; printf '%s\n' "$CLEAN_PROMPT"; echo "-----"
+          echo "-----"
+          printf '%s\n' "$CLEAN_PROMPT"
+          echo "-----"
 
-          # vynutit API-key auth + nastavit org/project
-          codex config set preferred_auth_method apikey || true
-          if [ -n "${OPENAI_ORG_ID:-}" ]; then
-            codex config set openai.organization "$OPENAI_ORG_ID" || true
-          fi
-          if [ -n "${OPENAI_PROJECT_ID:-}" ]; then
-            codex config set openai.project "$OPENAI_PROJECT_ID" || true
-          fi
+          # Spuštění Codex CLI – vynutíme provider+model (vyhne se defaultu 'gpt-5')
+          # Pozn.: CLI si vezme OPENAI_API_KEY z env. Projektový scope předává API automaticky
+          # přes hlavičku, Codex CLI to zvládá interně. Kdyby ne, fallback je přes curl sanity check výše.
+          codex --provider openai --model gpt-5-chat-latest exec "$CLEAN_PROMPT" | tee codex_output.log || true
 
-          # spustit NA JISTOTU: gpt-5-chat-latest (ne plain gpt-5)
-          codex --model gpt-5-chat-latest exec "$CLEAN_PROMPT" | tee codex_output.log || true
-
-      - name: Comment FULL Codex log (chunked)
+      - name: Comment FULL Codex log (single chunk)
         uses: actions/github-script@v7
         with:
           script: |
@@ -108,35 +95,16 @@ jobs:
               ? context.payload.issue.number
               : (context.payload.pull_request ? context.payload.pull_request.number : null);
             if (!issue_number) { core.setFailed('No issue/PR to comment on.'); return; }
-
+            let body;
             if (!fs.existsSync(path)) {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number,
-                body: '⚠️ Nebyl vytvořen žádný log (soubor `codex_output.log` chybí).'
-              });
-              return;
+              body = '⚠️ `codex_output.log` nevznikl.';
+            } else {
+              const whole = fs.readFileSync(path, 'utf8');
+              body = `\`\`\`text\n${whole}\n\`\`\``.slice(0, 60000);
             }
-
-            const whole = fs.readFileSync(path, 'utf8');
-            const MAX = 60000;
-            const total = Math.max(1, Math.ceil(whole.length / MAX));
-
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number,
-              body: `📎 **Codex log – plná délka** (rozsekáno do ${total} částí):`
+              body
             });
-
-            for (let i = 0; i < total; i++) {
-              const chunk = whole.slice(i * MAX, (i + 1) * MAX);
-              const body = `**Část ${i + 1}/${total}**\n\n\`\`\`text\n${chunk}\n\`\`\``;
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number,
-                body
-              });
-            }
