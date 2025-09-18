@@ -44,4 +44,4 @@ jobs:
           CLEAN_PROMPT=$(echo "$PROMPT" | sed 's/@codex//g' | sed 's/^[[:space:]]*//')
           echo "🤖 OpenAI Codex processing: $CLEAN_PROMPT"
           
-          codex --full-auto --quiet "$CLEAN_PROMPT"
+          codex --full-auto "$CLEAN_PROMPT"
