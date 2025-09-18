@@ -35,7 +35,7 @@ jobs:
       - name: Sanity check OpenAI API key against chat (gpt-5-chat-latest)
         env:
           OPENAI_API_KEY:   ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_PROJECT_ID:${{ secrets.OPENAI_PROJECT_ID }}
+          OPENAI_PROJECT_ID: ${{ secrets.OPENAI_PROJECT_ID }}
         shell: bash
         run: |
           if [ -z "${OPENAI_API_KEY:-}" ]; then
