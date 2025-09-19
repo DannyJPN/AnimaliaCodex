@@ -1,102 +1,106 @@
-using System.Runtime.ConstrainedExecution;
-using Microsoft.AspNetCore.Authentication.Negotiate;
-using PziLogin.Services;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.IdentityModel.Tokens;
+using PziLogin.Auth;
 using Serilog;
-
-// NOTE: Test code to verify AD connection
-if (args.Length > 0)
-{
-  int ERROR_LOGON_FAILURE = 0x31;
-
-  var authType = Enum.Parse(typeof(System.DirectoryServices.Protocols.AuthType), args[3]);
-  var credentials = new System.Net.NetworkCredential(args[1], args[2], args[0]);
-  var adIdentifier = new System.DirectoryServices.Protocols.LdapDirectoryIdentifier(args[0]);
-
-  using (var connection = new System.DirectoryServices.Protocols.LdapConnection(adIdentifier, credentials, System.DirectoryServices.Protocols.AuthType.Digest))
-  {
-    connection.SessionOptions.Sealing = true;
-    connection.SessionOptions.Signing = true;
-
-    try
-    {
-      connection.Bind();
-    }
-    catch (System.DirectoryServices.Protocols.LdapException lEx)
-    {
-      if (ERROR_LOGON_FAILURE == lEx.ErrorCode)
-      {
-        Console.WriteLine("Bad credentials");
-      }
-
-      throw;
-    }
-  }
-
-  Console.WriteLine("OK");
-
-  return;
-}
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Host.UseSerilog((ctx, configuration) => {
+builder.Host.UseSerilog((ctx, configuration) =>
+{
   configuration.MinimumLevel.Information();
   configuration.WriteTo.Console();
 });
 
-builder.Services.Configure<IISOptions>(options =>
+builder.Services.Configure<Auth0Options>(builder.Configuration.GetSection(Auth0Options.SectionName));
+
+builder.Services.AddHttpClient("Auth0", (provider, client) =>
 {
-  options.ForwardClientCertificate = true;
-  options.AutomaticAuthentication = false;
-});
-
-// Add services to the container.
-builder.Services.AddControllersWithViews();
-
-builder.Services.AddAuthentication(NegotiateDefaults.AuthenticationScheme)
-  .AddNegotiate(options =>
+  var options = provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<Auth0Options>>().Value;
+  if (!string.IsNullOrWhiteSpace(options.Domain))
   {
-  });
-
-builder.Services.AddAuthorization((options) =>
-{
-  options.FallbackPolicy = options.DefaultPolicy;
+    client.BaseAddress = new Uri($"https://{options.Domain}/");
+  }
 });
 
-builder.Services.AddTransient((provider) =>
-{
-  var configuration = provider.GetRequiredService<IConfiguration>();
+var auth0Options = builder.Configuration.GetSection(Auth0Options.SectionName).Get<Auth0Options>() ?? new Auth0Options();
 
-  return new ActiveDirectoryService(
-    configuration.GetSection("Pzi:AdAddress").Get<string>()!,
-    configuration.GetSection("Pzi:AdLogin").Get<string>()!,
-    configuration.GetSection("Pzi:AdPassword").Get<string>()!,
-    configuration.GetSection("Pzi:AdSearchBase").Get<string>()!,
-    provider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActiveDirectoryService>>()
-  );
+builder.Services.AddAuthentication(options =>
+{
+  options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+  options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+  options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+})
+.AddCookie(options =>
+{
+  options.SlidingExpiration = true;
+})
+.AddOpenIdConnect(options =>
+{
+  options.Authority = string.IsNullOrWhiteSpace(auth0Options.Domain)
+    ? null
+    : $"https://{auth0Options.Domain}";
+  options.ClientId = auth0Options.ClientId;
+  options.ClientSecret = auth0Options.ClientSecret;
+  options.ResponseType = "code";
+  options.UsePkce = true;
+  options.SaveTokens = true;
+  options.CallbackPath = "/authenticate/callback";
+  options.Scope.Clear();
+  options.Scope.Add("openid");
+  options.Scope.Add("profile");
+  options.Scope.Add("email");
+  options.Scope.Add("offline_access");
+  if (auth0Options.AdditionalScopes?.Length > 0)
+  {
+    foreach (var scope in auth0Options.AdditionalScopes.Where(s => !string.IsNullOrWhiteSpace(s)))
+    {
+      options.Scope.Add(scope);
+    }
+  }
+
+  options.TokenValidationParameters = new TokenValidationParameters
+  {
+    NameClaimType = "name",
+    RoleClaimType = "https://schemas.auth0.com/roles"
+  };
+
+  options.Events = new OpenIdConnectEvents
+  {
+    OnRedirectToIdentityProvider = context =>
+    {
+      var requestOptions = context.HttpContext.RequestServices.GetRequiredService<Microsoft.Extensions.Options.IOptions<Auth0Options>>().Value;
+      var audience = context.Properties?.GetString("audience") ?? requestOptions.Audience;
+      if (!string.IsNullOrWhiteSpace(audience))
+      {
+        context.ProtocolMessage.SetParameter("audience", audience);
+      }
+
+      var organization = context.Properties?.GetString("organization") ?? requestOptions.Organization;
+      if (!string.IsNullOrWhiteSpace(organization))
+      {
+        context.ProtocolMessage.SetParameter("organization", organization);
+      }
+
+      return Task.CompletedTask;
+    }
+  };
 });
 
-builder.Services.AddTransient((provider) =>
-{
-  var configuration = provider.GetRequiredService<IConfiguration>();
+builder.Services.AddAuthorization();
 
-  return new TokenService(
-    configuration.GetSection("Pzi:TokenSecret").Get<string>()!,
-    configuration.GetSection("Pzi:TokenIssuer").Get<string>()!,
-    configuration.GetSection("Pzi:TokenAudience").Get<string>()!,
-    36000,
-    60
-  );
-});
+builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
 app.UseDeveloperExceptionPage();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-  // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
   app.UseHsts();
 }
 
@@ -110,6 +114,6 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller}/{action}/{id?}");
+    pattern: "{controller=Authenticate}/{action=Login}/{id?}");
 
 app.Run();

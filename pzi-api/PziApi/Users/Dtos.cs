@@ -4,7 +4,9 @@ public class Dtos
 {
   public record UserLoggedInRequest(
     string UserName,
-    string[] Roles
+    string? TenantId = null,
+    string[]? Roles = null,
+    string[]? Permissions = null
   );
 
   public record UserSettingsModel(

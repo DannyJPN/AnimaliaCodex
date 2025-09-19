@@ -1,9 +1,16 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using NSwag.Generation.Processors.Security;
+using PziApi.CrossCutting.Auth;
 using PziApi.CrossCutting.Database;
 using Microsoft.AspNetCore.OData;
 using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
-using PziApi.CrossCutting.Auth;
-using Microsoft.EntityFrameworkCore;
 using PziApi.TaxonomyClasses;
 using PziApi.TaxonomyOrders;
 using PziApi.Specimens;
@@ -168,27 +175,84 @@ internal class Program
     });
 
     builder.Services.AddEndpointsApiExplorer();
+    builder.Services.Configure<Auth0Options>(builder.Configuration.GetSection(Auth0Options.SectionName));
+    builder.Services.Configure<PermissionOptions>(builder.Configuration.GetSection(PermissionOptions.SectionName));
+
+    var auth0Options = builder.Configuration
+      .GetSection(Auth0Options.SectionName)
+      .Get<Auth0Options>() ?? new Auth0Options();
+
+    builder.Services
+      .AddAuthentication(options =>
+      {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+      })
+      .AddJwtBearer(options =>
+      {
+        if (!string.IsNullOrWhiteSpace(auth0Options.Domain))
+        {
+          options.Authority = $"https://{auth0Options.Domain}";
+        }
+
+        if (!string.IsNullOrWhiteSpace(auth0Options.Audience))
+        {
+          options.Audience = auth0Options.Audience;
+        }
+
+        var roleClaimType = auth0Options.RoleClaims.FirstOrDefault(rc => !string.IsNullOrWhiteSpace(rc))
+          ?? ClaimTypes.Role;
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+          NameClaimType = ClaimTypes.NameIdentifier,
+          RoleClaimType = roleClaimType,
+          ValidateAudience = !string.IsNullOrWhiteSpace(auth0Options.Audience),
+          ValidAudience = string.IsNullOrWhiteSpace(auth0Options.Audience)
+            ? null
+            : auth0Options.Audience
+        };
+      });
+
+    builder.Services.AddSingleton<IAuthorizationHandler, Auth0PermissionHandler>();
+
+    builder.Services.AddAuthorization(options =>
+    {
+      var defaultPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
+        .Build();
+
+      options.DefaultPolicy = defaultPolicy;
+      options.FallbackPolicy = defaultPolicy;
+
+      foreach (var permission in Auth0PermissionMapper.GetAllPermissions())
+      {
+        options.AddPolicy(permission, policy =>
+        {
+          policy.Requirements.Add(new PziPermissionRequirement(permission));
+        });
+      }
+    });
+
     builder.Services.AddOpenApiDocument(config =>
     {
       config.DocumentName = "PziAPI";
       config.Title = "PziApi v1";
       config.Version = "v1";
 
-      config.AddSecurity("ApiKey", Enumerable.Empty<string>(), new NSwag.OpenApiSecurityScheme()
+      config.AddSecurity("Bearer", Enumerable.Empty<string>(), new NSwag.OpenApiSecurityScheme
       {
-        Type = NSwag.OpenApiSecuritySchemeType.ApiKey,
-        Description = "ApiKey Authentication",
-        Name = "X-API-Key",
-        In = NSwag.OpenApiSecurityApiKeyLocation.Header
+        Type = NSwag.OpenApiSecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Description = "Auth0 JWT Bearer"
       });
 
+      config.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor("Bearer"));
       config.OperationProcessors.Add(new ODataOperationProcessor());
       config.OperationProcessors.Add(new RemoveODataQueryOptionsProcessor());
     });
-
-    builder.Services.AddTransient<ApiKeyValidationMiddleware>();
-
-    builder.Services.Configure<PermissionOptions>(builder.Configuration.GetSection(PermissionOptions.SectionName));
 
     builder.Services
       .AddControllers()
@@ -232,11 +296,30 @@ internal class Program
         config.DocumentPath = "/swagger/{documentName}/swagger.json";
         config.DocExpansion = "list";
 
+        var swaggerClientId = builder.Configuration.GetValue<string>("Auth0:SwaggerClientId")
+          ?? builder.Configuration.GetValue<string>("Auth0:ClientId");
+
+        if (!string.IsNullOrWhiteSpace(swaggerClientId))
+        {
+          config.OAuth2Client = new NSwag.AspNetCore.OAuth2ClientSettings
+          {
+            ClientId = swaggerClientId,
+            AppName = "PziAPI Swagger"
+          };
+
+          if (!string.IsNullOrWhiteSpace(auth0Options.Audience))
+          {
+            config.OAuth2Client.AdditionalQueryStringParameters ??= new Dictionary<string, string>();
+            config.OAuth2Client.AdditionalQueryStringParameters["audience"] = auth0Options.Audience;
+          }
+        }
+
         config.ServerUrl = "https://metazoa-t.api.zoopraha.cz";
       });
     }
 
-    app.UseMiddleware<ApiKeyValidationMiddleware>();
+    app.UseAuthentication();
+    app.UseAuthorization();
 
     RegisterEndpoints(app);
 

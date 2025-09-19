@@ -718,5 +718,19 @@ public class PziDbContext : DbContext
             .WithMany(e => e.JournalActionTypes)
             .HasForeignKey(d => d.OrganizationLevelId);
     });
+
+    modelBuilder.Entity<User>(entity =>
+    {
+      entity.Property(e => e.Auth0UserId)
+        .HasMaxLength(256);
+      entity.Property(e => e.TenantId)
+        .HasMaxLength(128);
+    });
+
+    modelBuilder.Entity<UserRole>(entity =>
+    {
+      entity.Property(e => e.TenantId)
+        .HasMaxLength(128);
+    });
   }
 }

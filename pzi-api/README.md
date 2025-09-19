@@ -13,17 +13,20 @@ API project that powers PZI backend.
 ## Configuration values for container
 
 - `Pzi__SwaggerEnabled` - specify `true` / `false` to enable / disable swagger for the interaction. When running in dev mode, swagger is always active.
-- `Pzi__SwaggerApiHost` - optional parameter, when set override default API url showin in Swagger UI
-- `Pzi__ApiKeys__[index]` - list of API keys allowed for the application
+- `Pzi__SwaggerApiHost` - optional parameter, when set override default API url shown in Swagger UI
+- `Auth0__Domain` - Auth0 tenant domain (e.g. `zoopraha-metazoa.eu.auth0.com`)
+- `Auth0__Audience` - Auth0 API identifier configured for `pzi-api`
+- `Auth0__TenantClaim` - Claim name that contains tenant/organisation identifier (defaults to `org_id`)
+- `Auth0__SwaggerClientId` (optional) - Auth0 application client id used for Swagger OAuth2 login
 - `ConnectionStrings__Default` - Connection string to backing database
-- Configuration sections for user permissions
-  - `Pzi__Permissions__GrantAllPermissions` - When set to `true`, all users will have all permissions regardless of their AD groups
-  - `Pzi__Permissions__RecordsRead__[index]` - List of AD groups that have RECORDS:VIEW permission
-  - `Pzi__Permissions__RecordsEdit__[index]` - List of AD groups that have RECORDS:EDIT permission
-  - `Pzi__Permissions__ListsView__[index]` - List of AD groups that have LISTS:VIEW permission
-  - `Pzi__Permissions__ListsEdit__[index]` - List of AD groups that have LISTS:EDIT permission
-  - `Pzi__Permissions__DocumentationDepartment__[index]` - List of AD groups that have DOCUMENTATION_DEPARTMENT permission
-  - `Pzi__Permissions__JournalAccess__[index]` - List of AD groups that have JOURNAL:ACCESS permission
+- Configuration sections for user permissions (legacy AD role compatibility / fallbacks)
+  - `Pzi__Permissions__GrantAllPermissions` - When set to `true`, all users will have all permissions regardless of their claims
+  - `Pzi__Permissions__RecordsRead__[index]` - Legacy role identifiers that grant RECORDS:VIEW permission
+  - `Pzi__Permissions__RecordsEdit__[index]` - Legacy role identifiers that grant RECORDS:EDIT permission
+  - `Pzi__Permissions__ListsView__[index]` - Legacy role identifiers that grant LISTS:VIEW permission
+  - `Pzi__Permissions__ListsEdit__[index]` - Legacy role identifiers that grant LISTS:EDIT permission
+  - `Pzi__Permissions__DocumentationDepartment__[index]` - Legacy role identifiers that grant DOCUMENTATION_DEPARTMENT permission
+  - `Pzi__Permissions__JournalRead__[index]` - Legacy role identifiers that grant JOURNAL:READ permission
 
 ## Swagger
 
