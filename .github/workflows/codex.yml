@@ -1,4 +1,4 @@
-name: OpenAI Codex (hard override model)
+name: OpenAI Codex (hard override + DIAG)
 
 on:
   issue_comment:
@@ -45,7 +45,6 @@ jobs:
           printf '%s\n' ''                                 >> "$HOME/.codex/config.toml"
           printf '%s\n' '[defaults]'                       >> "$HOME/.codex/config.toml"
           printf '%s\n' 'model = "o4-mini"'                >> "$HOME/.codex/config.toml"
-          # doplň openai.project / organization, pokud jsou
           if [ -n "${OPENAI_PROJECT_ID:-}" ] || [ -n "${OPENAI_ORG_ID:-}" ]; then
             printf '%s\n' ''                              >> "$HOME/.codex/config.toml"
             printf '%s\n' '[openai]'                      >> "$HOME/.codex/config.toml"
@@ -55,20 +54,52 @@ jobs:
           echo "== ~/.codex/config.toml (redigováno) =="
           sed -E 's/(project = "proj_)[^"]+/\1****/; s/(organization = "org_)[^"]+/\1****/' "$HOME/.codex/config.toml" || true
 
-      - name: Sanity check – Responses endpoint (o4-mini)
+      - name: DIAG OpenAI auth matrix (print JSON errors)
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_KEY:    ${{ secrets.OPENAI_API_KEY }}
           OPENAI_PROJECT_ID: ${{ secrets.OPENAI_PROJECT_ID }}
+          OPENAI_ORG_ID:     ${{ secrets.OPENAI_ORG_ID }}
         shell: bash
         run: |
-          CODE=$(curl -sS -o /dev/null -w "%{http_code}\n" \
-            -H "Authorization: Bearer $OPENAI_API_KEY" \
-            ${OPENAI_PROJECT_ID:+-H "OpenAI-Project: $OPENAI_PROJECT_ID"} \
-            -H "Content-Type: application/json" \
-            -d '{"model":"o4-mini","input":[{"role":"user","content":[{"type":"input_text","text":"ping"}]}]}' \
-            https://api.openai.com/v1/responses || true)
-          echo "Responses ping HTTP=$CODE"
-          test "$CODE" = "200" -o "$CODE" = "201"
+          set -eu
+          echo "KEY prefix: ${OPENAI_API_KEY:0:8}"
+          echo -n "$OPENAI_API_KEY" | wc -c | awk '{print "KEY length (bytes): "$1}'
+          echo -n "$OPENAI_API_KEY" | tail -c 4 | hexdump -C || true
+
+          call() {
+            NAME="$1"; shift
+            echo "---- $NAME ----"
+            set +e
+            RESP=$(curl -sS -w "\nHTTP:%{http_code}\n" "$@")
+            CODE=$(echo "$RESP" | sed -n 's/^HTTP:\([0-9][0-9][0-9]\)$/\1/p')
+            BODY=$(echo "$RESP" | sed '/^HTTP:/d')
+            echo "HTTP=$CODE"
+            echo "BODY:"
+            echo "$BODY"
+            set -e
+          }
+
+          BASE_H=( -H "Authorization: Bearer $OPENAI_API_KEY" -H "Content-Type: application/json" )
+          DATA='{ "model": "o4-mini", "input": [ { "role": "user", "content": [ { "type": "input_text", "text": "ping" } ] } ] }'
+          URL="https://api.openai.com/v1/responses"
+
+          call "No extra headers" \
+            "${BASE_H[@]}" -d "$DATA" "$URL"
+
+          if [ -n "${OPENAI_PROJECT_ID:-}" ]; then
+            call "With OpenAI-Project" \
+              "${BASE_H[@]}" -H "OpenAI-Project: $OPENAI_PROJECT_ID" -d "$DATA" "$URL"
+          fi
+
+          if [ -n "${OPENAI_ORG_ID:-}" ]; then
+            call "With OpenAI-Organization" \
+              "${BASE_H[@]}" -H "OpenAI-Organization: $OPENAI_ORG_ID" -d "$DATA" "$URL"
+          fi
+
+          if [ -n "${OPENAI_PROJECT_ID:-}" ] && [ -n "${OPENAI_ORG_ID:-}" ]; then
+            call "With Project + Organization" \
+              "${BASE_H[@]}" -H "OpenAI-Project: $OPENAI_PROJECT_ID" -H "OpenAI-Organization: $OPENAI_ORG_ID" -d "$DATA" "$URL"
+          fi
 
       - name: Run Codex via npx (exec, forced o4-mini)
         env:
