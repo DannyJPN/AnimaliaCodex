@@ -35,25 +35,75 @@ jobs:
           npm install -g @openai/codex@latest
           codex --version || true
 
-      # Ověříme stejný model přes REST – MUSÍ vrátit 200, jinak je problém s klíčem/projektem
+      # Vytvoříme ~runner/.codex/config.toml s API-key auth + projektem/organizací
+      - name: Write Codex runtime config (apikey + project/org)
+        env:
+          OPENAI_API_KEY:    ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_PROJECT_ID: ${{ secrets.OPENAI_PROJECT_ID }}
+          OPENAI_ORG_ID:     ${{ secrets.OPENAI_ORG_ID }}
+        shell: bash
+        run: |
+          test -n "${OPENAI_API_KEY:-}" || { echo "❌ OPENAI_API_KEY secret chybí"; exit 1; }
+          mkdir -p "$HOME/.codex"
+          {
+            echo '[auth]'
+            echo 'preferred_auth_method = "apikey"'
+            echo ''
+            echo '[openai]'
+            # API key nestrkáme do souboru (bere se z env), ale project/org ano:
+            if [ -n "${OPENAI_PROJECT_ID:-}" ]; then
+              echo "project = \"${OPENAI_PROJECT_ID}\""
+            fi
+            if [ -n "${OPENAI_ORG_ID:-}" ]; then
+              echo "organization = \"${OPENAI_ORG_ID}\""
+            fi
+          } > "$HOME/.codex/config.toml"
+
+          echo "== ~/.codex/config.toml ==================="
+          sed 's/^\(project = \|organization = \).*/\1"****"/' "$HOME/.codex/config.toml" || true
+          echo "=========================================="
+
+      # Pro jistotu nastavíme i ENV aliasy, které některé knihovny berou
+      - name: Export OpenAI env aliases (project/org)
+        env:
+          OPENAI_PROJECT_ID: ${{ secrets.OPENAI_PROJECT_ID }}
+          OPENAI_ORG_ID:     ${{ secrets.OPENAI_ORG_ID }}
+        shell: bash
+        run: |
+          {
+            echo "OPENAI_API_KEY is set: ${OPENAI_API_KEY:+yes}"
+            [ -n "${OPENAI_PROJECT_ID:-}" ] && echo "OPENAI_PROJECT_ID set" || echo "OPENAI_PROJECT_ID not set"
+            [ -n "${OPENAI_ORG_ID:-}" ] && echo "OPENAI_ORG_ID set" || echo "OPENAI_ORG_ID not set"
+          }
+          # Alias proměnných pro případ, že CLI/SDK čte starší názvy:
+          if [ -n "${OPENAI_PROJECT_ID:-}" ]; then
+            echo "OPENAI_PROJECT=${OPENAI_PROJECT_ID}" >> $GITHUB_ENV
+          fi
+          if [ -n "${OPENAI_ORG_ID:-}" ]; then
+            echo "OPENAI_ORGANIZATION=${OPENAI_ORG_ID}" >> $GITHUB_ENV
+          fi
+
+      # Sanity check: stejný model a stejné hlavičky – MUSÍ vrátit 200, jinak fail
       - name: Sanity check OpenAI API key (chat gpt-5-chat-latest)
         env:
           OPENAI_API_KEY:    ${{ secrets.OPENAI_API_KEY }}
           OPENAI_PROJECT_ID: ${{ secrets.OPENAI_PROJECT_ID }}
         shell: bash
         run: |
-          if [ -z "${OPENAI_API_KEY:-}" ]; then
-            echo "OPENAI_API_KEY secret chybí"; exit 1
-          fi
           echo "HTTP /v1/chat/completions (gpt-5-chat-latest):"
-          curl -sS -o /dev/null -w "%{http_code}\n" \
+          CODE=$(curl -sS -o /dev/null -w "%{http_code}\n" \
             -H "Authorization: Bearer $OPENAI_API_KEY" \
             ${OPENAI_PROJECT_ID:+-H "OpenAI-Project: $OPENAI_PROJECT_ID"} \
             -H "Content-Type: application/json" \
             -d '{ "model": "gpt-5-chat-latest", "messages": [ { "role": "user", "content": "ping" } ] }' \
-            https://api.openai.com/v1/chat/completions
+            https://api.openai.com/v1/chat/completions || true)
+          echo "$CODE"
+          if [ "$CODE" != "200" ] && [ "$CODE" != "201" ]; then
+            echo "❌ OpenAI API vrací $CODE pro chat/completions. Zkontroluj klíč/projekt a dostupnost modelu."
+            exit 1
+          fi
 
-      - name: Run OpenAI Codex (non-interactive, explicit model + apikey auth + project)
+      - name: Run OpenAI Codex (non-interactive, explicit model; API key + project)
         env:
           OPENAI_API_KEY:    ${{ secrets.OPENAI_API_KEY }}
           OPENAI_PROJECT_ID: ${{ secrets.OPENAI_PROJECT_ID }}
@@ -65,7 +115,7 @@ jobs:
           git config user.name  "OpenAI Codex"
           git config user.email "codex@openai.com"
 
-          # Vytáhni zadání z eventu
+          # Prompt z eventu
           if [[ "${{ github.event_name }}" == "issue_comment" ]]; then
             PROMPT="${{ github.event.comment.body }}"
           elif [[ "${{ github.event_name }}" == "pull_request_review_comment" ]]; then
@@ -74,25 +124,17 @@ jobs:
             PROMPT="${{ github.event.issue.body }}"
           fi
 
-          # Odstraň '@codex' (case-insensitive) a ořež bílé znaky
+          # Očistit o @codex
           CLEAN_PROMPT="$(printf '%s' "$PROMPT" | sed 's/@codex//Ig' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
           if [[ -z "$CLEAN_PROMPT" ]]; then
-            CLEAN_PROMPT="Proveď požadavek popsaný v souvisejícím issue/komentáři co nejbezpečněji; pokud je specifikace vágní, navrhni konkrétní TODO a diffy."
+            CLEAN_PROMPT="Proveď požadavek popsaný v souvisejícím issue/komentáři co nejbezpečněji; pokud je vágní, navrhni TODO a diffy."
           fi
 
           echo "🤖 OpenAI Codex processing:"
           echo "-----"; printf '%s\n' "$CLEAN_PROMPT"; echo "-----"
 
-          # Spusť Codex s přímými konfiguracemi:
-          # - přinutit autentizaci API klíčem
-          # - u projektového klíče dát project ID (jinak 401)
-          # - model specifikovat AŽ za 'exec'
-          EXTRA_CFG=()
-          EXTRA_CFG+=(--config preferred_auth_method=apikey)
-          [ -n "${OPENAI_ORG_ID:-}" ]     && EXTRA_CFG+=(--config openai.organization="${OPENAI_ORG_ID}")
-          [ -n "${OPENAI_PROJECT_ID:-}" ] && EXTRA_CFG+=(--config openai.project="${OPENAI_PROJECT_ID}")
-
-          codex "${EXTRA_CFG[@]}" exec -m gpt-5-chat-latest "$CLEAN_PROMPT" | tee codex_output.log || true
+          # Spuštění: model se dává ZA 'exec'; auth bere z ~/.codex/config.toml + env
+          codex exec -m gpt-5-chat-latest "$CLEAN_PROMPT" | tee codex_output.log || true
 
       - name: Comment FULL Codex log (single chunk)
         uses: actions/github-script@v7
