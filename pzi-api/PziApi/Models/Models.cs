@@ -699,6 +699,8 @@ public class User
 {
   public int Id { get; set; }
   public string UserName { get; set; } = null!;
+  public string? Auth0UserId { get; set; }
+  public string? TenantId { get; set; }
   public string? VisibleTaxonomyStatuses { get; set; }
   public bool TaxonomySearchByCz { get; set; }
   public bool TaxonomySearchByLat { get; set; }
@@ -712,6 +714,7 @@ public class UserRole
   public int Id { get; set; }
   public int UserId { get; set; }
   public string RoleName { get; set; } = null!;
+  public string? TenantId { get; set; }
   public User? User { get; set; }
 }
 
