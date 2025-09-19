@@ -1,1 +1,111 @@
+name: OpenAI Codex (hard override model)
 
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  issues:
+    types: [opened, assigned]
+
+jobs:
+  codex:
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@codex')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@codex')) ||
+      (github.event_name == 'issues' && contains(github.event.issue.body, '@codex'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+
+      - name: Install Codex CLI fresh (only via npx)
+        run: npm cache verify
+
+      - name: Kill any old config and write a clean one
+        env:
+          OPENAI_PROJECT_ID: ${{ secrets.OPENAI_PROJECT_ID }}
+          OPENAI_ORG_ID:     ${{ secrets.OPENAI_ORG_ID }}
+        shell: bash
+        run: |
+          rm -rf "$HOME/.codex"
+          mkdir -p "$HOME/.codex"
+          cat > "$HOME/.codex/config.toml" <<'TOML'
+[auth]
+preferred_auth_method = "apikey"
+
+[openai]
+# project/org doplníme o pár řádků níže, ať se necitlivé hodnoty neduplicití
+
+[defaults]
+# TADY VYNUTÍME VÝCHOZÍ MODEL, aby CLI nikdy nesáhlo na gpt-5
+model = "o4-mini"
+TOML
+
+          # bezpečně přidáme project/org, když jsou k dispozici
+          {
+            [ -n "${OPENAI_PROJECT_ID:-}" ] && echo "project = \"${OPENAI_PROJECT_ID}\""
+            [ -n "${OPENAI_ORG_ID:-}" ]     && echo "organization = \"${OPENAI_ORG_ID}\""
+          } | sed '1s/^/[openai]\n/' >> "$HOME/.codex/config.toml"
+
+          echo "== ~/.codex/config.toml (redigováno) =="
+          sed -E 's/(project = "proj_)[^"]+/\1****/; s/(organization = "org_)[^"]+/\1****/' "$HOME/.codex/config.toml"
+
+      - name: Sanity check – Responses endpoint (o4-mini)
+        env:
+          OPENAI_API_KEY:    ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_PROJECT_ID: ${{ secrets.OPENAI_PROJECT_ID }}
+        shell: bash
+        run: |
+          CODE=$(curl -sS -o /dev/null -w "%{http_code}\n" \
+            -H "Authorization: Bearer $OPENAI_API_KEY" \
+            ${OPENAI_PROJECT_ID:+-H "OpenAI-Project: $OPENAI_PROJECT_ID"} \
+            -H "Content-Type: application/json" \
+            -d '{"model":"o4-mini","input":[{"role":"user","content":[{"type":"input_text","text":"ping"}]}]}' \
+            https://api.openai.com/v1/responses || true)
+          echo "Responses ping HTTP=$CODE"
+          test "$CODE" = "200" -o "$CODE" = "201"
+
+      - name: Run Codex via npx (exec, no GPT-5)
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN:   ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          git config user.name  "OpenAI Codex"
+          git config user.email "codex@openai.com"
+
+          if [[ "${{ github.event_name }}" == "issue_comment" ]]; then
+            PROMPT="${{ github.event.comment.body }}"
+          elif [[ "${{ github.event_name }}" == "pull_request_review_comment" ]]; then
+            PROMPT="${{ github.event.comment.body }}"
+          else
+            PROMPT="${{ github.event.issue.body }}"
+          fi
+
+          CLEAN="$(printf '%s' "$PROMPT" | sed 's/@codex//Ig; s/^[[:space:]]*//; s/[[:space:]]*$//')"
+          echo "🤖 Codex processing:"
+          echo "-----"; printf '%s\n' "$CLEAN"; echo "-----"
+
+          # SPUSŤ jen přes npx a VŽDY specifikuj model ZA 'exec'
+          npx -y @openai/codex@latest exec -m o4-mini "$CLEAN" | tee codex_output.log || true
+
+      - name: Comment full log
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const p='codex_output.log';
+            const n=context.payload.issue
+              ? context.payload.issue.number
+              : (context.payload.pull_request ? context.payload.pull_request.number : null);
+            if (!n) { core.setFailed('No issue/PR to comment on.'); return; }
+            let body='⚠️ log nenalezen';
+            if (fs.existsSync(p)) body = '```text\n'+fs.readFileSync(p,'utf8').slice(0,60000)+'\n```';
+            await github.rest.issues.createComment({owner:context.repo.owner,repo:context.repo.repo,issue_number:n,body});
