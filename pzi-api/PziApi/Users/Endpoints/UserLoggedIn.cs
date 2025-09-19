@@ -8,12 +8,13 @@ using PziApi.CrossCutting.Database;
 using PziApi.CrossCutting.Permissions;
 using PziApi.CrossCutting.Settings;
 using PziApi.Models;
+using System.Security.Claims;
 
 namespace PziApi.Users.Endpoints;
 
 public class UserLoggedIn
 {
-  public static async Task<Results<Ok<CommonDtos.SuccessResult<Dtos.UserSettingsModel>>, BadRequest>> Handle([FromBody] Dtos.UserLoggedInRequest viewModel, PziDbContext dbContext, IOptions<PermissionOptions> permissionOptions)
+  public static async Task<Results<Ok<CommonDtos.SuccessResult<Dtos.UserSettingsModel>>, BadRequest>> Handle([FromBody] Dtos.UserLoggedInRequest viewModel, PziDbContext dbContext, IOptions<PermissionOptions> permissionOptions, ClaimsPrincipal claimsPrincipal)
   {
     var user = await dbContext.Users.FirstOrDefaultAsync(u => u.UserName == viewModel.UserName);
 
@@ -31,12 +32,15 @@ public class UserLoggedIn
       await dbContext.SaveChangesAsync();
     }
 
+    var validatedRoles = ExtractRolesFromClaims(claimsPrincipal);
+    var validatedRolesArray = validatedRoles.ToArray();
+
     var existingRoles = await dbContext.UserRoles
         .Where(r => r.User!.UserName == viewModel.UserName)
         .ToArrayAsync();
 
-    var newRoles = viewModel.Roles
-      .Where(r => !existingRoles.Any(ur => ur.RoleName == r))
+    var newRoles = validatedRolesArray
+      .Where(r => !existingRoles.Any(ur => string.Equals(ur.RoleName, r, StringComparison.OrdinalIgnoreCase)))
       .Select(r => new UserRole()
       {
         RoleName = r,
@@ -45,7 +49,7 @@ public class UserLoggedIn
       .ToArray();
 
     var rolesToDrop = existingRoles
-      .Where(ur => !viewModel.Roles.Any(r => ur.RoleName == r))
+      .Where(ur => !validatedRoles.Contains(ur.RoleName))
       .ToArray();
 
     dbContext.UserRoles.RemoveRange(rolesToDrop);
@@ -58,17 +62,24 @@ public class UserLoggedIn
       : user.VisibleTaxonomyStatuses;
 
     var hasJournalEditRoleInOrgLevels = await dbContext.OrganizationLevels.AnyAsync(ol =>
-          viewModel.Roles.Contains(ol.JournalApproversGroup!) ||
-          viewModel.Roles.Contains(ol.JournalContributorGroup!));
+          validatedRolesArray.Contains(ol.JournalApproversGroup!) ||
+          validatedRolesArray.Contains(ol.JournalContributorGroup!));
 
-    var hasJournalReadRoleInOrgLevels = await dbContext.OrganizationLevels.AnyAsync(ol => viewModel.Roles.Contains(ol.JournalReadGroup!));
+    var hasJournalReadRoleInOrgLevels = await dbContext.OrganizationLevels.AnyAsync(ol => validatedRolesArray.Contains(ol.JournalReadGroup!));
 
-    var userPermissions = DetermineUserPermissions(
+    var permissionClaims = ExtractPermissionsFromClaims(claimsPrincipal);
+
+    var computedPermissions = DetermineUserPermissions(
       userName: viewModel.UserName,
-      roles: viewModel.Roles,
+      roles: validatedRolesArray,
       options: permissionOptions.Value,
       hasJournalReadRoleInOrgLevels: hasJournalReadRoleInOrgLevels,
       hasJournalEditRoleInOrgLevels: hasJournalEditRoleInOrgLevels);
+
+    var userPermissions = computedPermissions
+      .Concat(permissionClaims)
+      .Distinct(StringComparer.OrdinalIgnoreCase)
+      .ToArray();
 
     return TypedResults.Ok(
       CommonDtos.SuccessResult<Dtos.UserSettingsModel>.FromItemAndFluentValidation(
@@ -139,5 +150,48 @@ public class UserLoggedIn
     }
 
     return permissions.ToArray();
+  }
+
+  private static HashSet<string> ExtractRolesFromClaims(ClaimsPrincipal claimsPrincipal)
+  {
+    if (claimsPrincipal == null)
+    {
+      return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    }
+
+    return claimsPrincipal
+      .FindAll(c => IsRoleClaimType(c.Type))
+      .Select(c => c.Value)
+      .Where(value => !string.IsNullOrWhiteSpace(value))
+      .ToHashSet(StringComparer.OrdinalIgnoreCase);
+  }
+
+  private static bool IsRoleClaimType(string claimType)
+  {
+    return claimType == ClaimTypes.Role
+      || string.Equals(claimType, "role", StringComparison.OrdinalIgnoreCase)
+      || string.Equals(claimType, "roles", StringComparison.OrdinalIgnoreCase)
+      || claimType == ClaimTypes.GroupSid;
+  }
+
+  private static HashSet<string> ExtractPermissionsFromClaims(ClaimsPrincipal claimsPrincipal)
+  {
+    if (claimsPrincipal == null)
+    {
+      return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    }
+
+    return claimsPrincipal
+      .FindAll(c => IsPermissionClaimType(c.Type))
+      .Select(c => c.Value)
+      .Where(value => !string.IsNullOrWhiteSpace(value))
+      .ToHashSet(StringComparer.OrdinalIgnoreCase);
+  }
+
+  private static bool IsPermissionClaimType(string claimType)
+  {
+    return string.Equals(claimType, "permission", StringComparison.OrdinalIgnoreCase)
+      || string.Equals(claimType, "permissions", StringComparison.OrdinalIgnoreCase)
+      || string.Equals(claimType, "pzi:permission", StringComparison.OrdinalIgnoreCase);
   }
 }
