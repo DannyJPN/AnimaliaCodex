@@ -1,15 +1,14 @@
 ﻿
 # Database Export
 
-Exporting data and schema 1:1 from the legacy Firebird DB to the target MSSQL server database. As the source can be used hosted remote/local database or the .fbd file directly.
+Exporting data and schema 1:1 from the legacy Firebird DB to the target PostgreSQL database. As the source can be used hosted remote/local database or the .fbd file directly.
 
 
 ## Remote Configuration
 
 Firebird Db server connection string example: Server=;Database=zoo_pra.fdb;User=;Password=;Charset=UTF8;Dialect=3;
-MSSQL LocalDb connection string example: Server=(localdb)\\MSSQLLocalDB;Integrated Security=true;Database=Animalia;
-MSSQL Remote DB - access possible only from the RDP: Server=;Integrated Security=true;Database=Animalia;Encrypt=True;TrustServerCertificate=True;
-AZURE Sql DB: Server=tcp:metazoa.database.windows.net,1433;Initial Catalog=Metazoa;Persist Security Info=False;User ID=animalia;Password=;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=600;
+PostgreSQL local connection string example: Host=localhost;Port=5432;Database=pzi;Username=pzi;Password=STRONG_PASSWORD;
+PostgreSQL docker connection string example: Host=postgres;Port=5432;Database=pzi;Username=pzi;Password=pzi;
 
 
 ## FDB source file configuration

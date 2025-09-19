@@ -1,1079 +1,1069 @@
-DROP INDEX IF EXISTS [IX_TaxonomyHierarchyView] ON [dbo].[TaxonomyHierarchyView];
-DROP VIEW IF EXISTS [dbo].[TaxonomyHierarchyView];
-DROP INDEX IF EXISTS [IX_ExpositionHierarchyView] ON [dbo].[ExpositionHierarchyView];
-DROP VIEW IF EXISTS [dbo].[ExpositionHierarchyView];
-DROP VIEW IF EXISTS [dbo].[OrganizationHierarchyView];
+DROP INDEX IF EXISTS "IX_TaxonomyHierarchyView";
+DROP VIEW IF EXISTS public."TaxonomyHierarchyView";
+DROP INDEX IF EXISTS "IX_ExpositionHierarchyView";
+DROP VIEW IF EXISTS public."ExpositionHierarchyView";
+DROP VIEW IF EXISTS public."OrganizationHierarchyView";
 
-DROP TABLE IF EXISTS [dbo].[JournalActionTypesToOrganizationLevels];
-DROP TABLE IF EXISTS [dbo].[SpecimenImages];
-DROP TABLE IF EXISTS [dbo].[UserFlaggedDistricts];
-DROP TABLE IF EXISTS [dbo].[UserFlaggedSpecies];
-DROP TABLE IF EXISTS [dbo].[JournalActionTypeDefinitions];
-DROP TABLE IF EXISTS [dbo].[JournalEntrySpecimenAttributes];
-DROP TABLE IF EXISTS [dbo].[JournalEntryAttributes];
-DROP TABLE IF EXISTS [dbo].[JournalEntrySpecimens];
-DROP TABLE IF EXISTS [dbo].[JournalEntryAudits];
-DROP TABLE IF EXISTS [dbo].[JournalEntries];
-DROP TABLE IF EXISTS [dbo].[JournalActionTypes];
-DROP TABLE IF EXISTS [dbo].[SpecimenPlacements];
-DROP TABLE IF EXISTS [dbo].[Markings];
-DROP TABLE IF EXISTS [dbo].[SpecimenAggregatedMovements];
-DROP TABLE IF EXISTS [dbo].[Zoos];
-DROP TABLE IF EXISTS [dbo].[RecordSpecimens];
-DROP TABLE IF EXISTS [dbo].[RecordSpecies];
-DROP TABLE IF EXISTS [dbo].[Placements];
-DROP TABLE IF EXISTS [dbo].[ContractActions];
-DROP TABLE IF EXISTS [dbo].[Movements];
-DROP TABLE IF EXISTS [dbo].[Contracts];
-DROP TABLE IF EXISTS [dbo].[Cadavers];
-DROP TABLE IF EXISTS [dbo].[CadaverPartners];
-DROP TABLE IF EXISTS [dbo].[DocumentSpecimens];
-DROP TABLE IF EXISTS [dbo].[DocumentSpecies];
-DROP TABLE IF EXISTS [dbo].[Partners];
-DROP TABLE IF EXISTS [dbo].[Specimens];
-DROP TABLE IF EXISTS [dbo].[Species];
-DROP TABLE IF EXISTS [dbo].[TaxonomyGenera];
-DROP TABLE IF EXISTS [dbo].[TaxonomyFamilies];
-DROP TABLE IF EXISTS [dbo].[TaxonomyOrders];
-DROP TABLE IF EXISTS [dbo].[TaxonomyClasses];
-DROP TABLE IF EXISTS [dbo].[TaxonomyPhyla];
-DROP TABLE IF EXISTS [dbo].[ContractTypes];
-DROP TABLE IF EXISTS [dbo].[ContractMovementReasons];
-DROP TABLE IF EXISTS [dbo].[ContractActionTypes];
-DROP TABLE IF EXISTS [dbo].[ContractActionInitiators];
-DROP TABLE IF EXISTS [dbo].[SpecimenDocumentTypes];
-DROP TABLE IF EXISTS [dbo].[SpeciesDocumentTypes];
-DROP TABLE IF EXISTS [dbo].[RecordActionTypes];
-DROP TABLE IF EXISTS [dbo].[SpeciesProtectionTypes];
-DROP TABLE IF EXISTS [dbo].[ZooStatuses];
-DROP TABLE IF EXISTS [dbo].[RdbCodes];
-DROP TABLE IF EXISTS [dbo].[MarkingTypes];
-DROP TABLE IF EXISTS [dbo].[SpeciesCiteTypes];
-DROP TABLE IF EXISTS [dbo].[ClassificationTypes];
-DROP TABLE IF EXISTS [dbo].[EuCodes];
-DROP TABLE IF EXISTS [dbo].[GenderTypes];
-DROP TABLE IF EXISTS [dbo].[OriginTypes];
-DROP TABLE IF EXISTS [dbo].[IncrementReasons];
-DROP TABLE IF EXISTS [dbo].[DecrementReasons];
-DROP TABLE IF EXISTS [dbo].[Rearings];
-DROP TABLE IF EXISTS [dbo].[BirthMethods];
-DROP TABLE IF EXISTS [dbo].[Regions];
-DROP TABLE IF EXISTS [dbo].[Sections];
-DROP TABLE IF EXISTS [dbo].[Locations];
-DROP TABLE IF EXISTS [dbo].[ExpositionSets];
-DROP TABLE IF EXISTS [dbo].[ExpositionAreas];
-DROP TABLE IF EXISTS [dbo].[OrganizationLevels];
-DROP TABLE IF EXISTS [dbo].[UserTableSettings];
-DROP TABLE IF EXISTS [dbo].[UserRoles];
-DROP TABLE IF EXISTS [dbo].[Users];
+DROP TABLE IF EXISTS public."JournalActionTypesToOrganizationLevels";
+DROP TABLE IF EXISTS public."SpecimenImages";
+DROP TABLE IF EXISTS public."UserFlaggedDistricts";
+DROP TABLE IF EXISTS public."UserFlaggedSpecies";
+DROP TABLE IF EXISTS public."JournalActionTypeDefinitions";
+DROP TABLE IF EXISTS public."JournalEntrySpecimenAttributes";
+DROP TABLE IF EXISTS public."JournalEntryAttributes";
+DROP TABLE IF EXISTS public."JournalEntrySpecimens";
+DROP TABLE IF EXISTS public."JournalEntryAudits";
+DROP TABLE IF EXISTS public."JournalEntries";
+DROP TABLE IF EXISTS public."JournalActionTypes";
+DROP TABLE IF EXISTS public."SpecimenPlacements";
+DROP TABLE IF EXISTS public."Markings";
+DROP TABLE IF EXISTS public."SpecimenAggregatedMovements";
+DROP TABLE IF EXISTS public."Zoos";
+DROP TABLE IF EXISTS public."RecordSpecimens";
+DROP TABLE IF EXISTS public."RecordSpecies";
+DROP TABLE IF EXISTS public."Placements";
+DROP TABLE IF EXISTS public."ContractActions";
+DROP TABLE IF EXISTS public."Movements";
+DROP TABLE IF EXISTS public."Contracts";
+DROP TABLE IF EXISTS public."Cadavers";
+DROP TABLE IF EXISTS public."CadaverPartners";
+DROP TABLE IF EXISTS public."DocumentSpecimens";
+DROP TABLE IF EXISTS public."DocumentSpecies";
+DROP TABLE IF EXISTS public."Partners";
+DROP TABLE IF EXISTS public."Specimens";
+DROP TABLE IF EXISTS public."Species";
+DROP TABLE IF EXISTS public."TaxonomyGenera";
+DROP TABLE IF EXISTS public."TaxonomyFamilies";
+DROP TABLE IF EXISTS public."TaxonomyOrders";
+DROP TABLE IF EXISTS public."TaxonomyClasses";
+DROP TABLE IF EXISTS public."TaxonomyPhyla";
+DROP TABLE IF EXISTS public."ContractTypes";
+DROP TABLE IF EXISTS public."ContractMovementReasons";
+DROP TABLE IF EXISTS public."ContractActionTypes";
+DROP TABLE IF EXISTS public."ContractActionInitiators";
+DROP TABLE IF EXISTS public."SpecimenDocumentTypes";
+DROP TABLE IF EXISTS public."SpeciesDocumentTypes";
+DROP TABLE IF EXISTS public."RecordActionTypes";
+DROP TABLE IF EXISTS public."SpeciesProtectionTypes";
+DROP TABLE IF EXISTS public."ZooStatuses";
+DROP TABLE IF EXISTS public."RdbCodes";
+DROP TABLE IF EXISTS public."MarkingTypes";
+DROP TABLE IF EXISTS public."SpeciesCiteTypes";
+DROP TABLE IF EXISTS public."ClassificationTypes";
+DROP TABLE IF EXISTS public."EuCodes";
+DROP TABLE IF EXISTS public."GenderTypes";
+DROP TABLE IF EXISTS public."OriginTypes";
+DROP TABLE IF EXISTS public."IncrementReasons";
+DROP TABLE IF EXISTS public."DecrementReasons";
+DROP TABLE IF EXISTS public."Rearings";
+DROP TABLE IF EXISTS public."BirthMethods";
+DROP TABLE IF EXISTS public."Regions";
+DROP TABLE IF EXISTS public."Sections";
+DROP TABLE IF EXISTS public."Locations";
+DROP TABLE IF EXISTS public."ExpositionSets";
+DROP TABLE IF EXISTS public."ExpositionAreas";
+DROP TABLE IF EXISTS public."OrganizationLevels";
+DROP TABLE IF EXISTS public."UserTableSettings";
+DROP TABLE IF EXISTS public."UserRoles";
+DROP TABLE IF EXISTS public."Users";
 
-CREATE TABLE [dbo].[OrganizationLevels]
+CREATE TABLE public."OrganizationLevels"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [ParentId] INT,
-  [Level] NVARCHAR(10) NOT NULL CHECK ([Level] IN ('department', 'workplace', 'district')),
-  [Name] NVARCHAR(255) NOT NULL,
-  [Director] NVARCHAR(255),
-  [JournalContributorGroup] NVARCHAR(1024),
-  [JournalReadGroup] NVARCHAR(1024),
-  [JournalApproversGroup] NVARCHAR(1024),
-  [ModifiedBy] NVARCHAR(64),
-  [ModifiedAt] DATETIME DEFAULT GETDATE(),
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "ParentId" INTEGER,
+  "Level" VARCHAR(10) NOT NULL CHECK ("Level" IN ('department', 'workplace', 'district')),
+  "Name" VARCHAR(255) NOT NULL,
+  "Director" VARCHAR(255),
+  "JournalContributorGroup" VARCHAR(1024),
+  "JournalReadGroup" VARCHAR(1024),
+  "JournalApproversGroup" VARCHAR(1024),
+  "ModifiedBy" VARCHAR(64),
+  "ModifiedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-  CONSTRAINT FK_OrganizationLevels_OrganizationLevels  FOREIGN KEY ([ParentId]) REFERENCES [dbo].[OrganizationLevels] ([Id])
+  CONSTRAINT FK_OrganizationLevels_OrganizationLevels  FOREIGN KEY ("ParentId") REFERENCES public."OrganizationLevels" ("Id")
 );
 
-CREATE TABLE [dbo].[ExpositionAreas]
+CREATE TABLE public."ExpositionAreas"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [Name] NVARCHAR(255) NOT NULL,
-  [Note] NVARCHAR(1000),
-  [ModifiedBy] NVARCHAR(64),
-  [ModifiedAt] DATETIME DEFAULT GETDATE()
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "Name" VARCHAR(255) NOT NULL,
+  "Note" VARCHAR(1000),
+  "ModifiedBy" VARCHAR(64),
+  "ModifiedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE [dbo].[ExpositionSets]
+CREATE TABLE public."ExpositionSets"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [ExpositionAreaId] INT NOT NULL,
-  [Name] NVARCHAR(255) NOT NULL,
-  [Note] NVARCHAR(1000),
-  [ModifiedBy] NVARCHAR(64),
-  [ModifiedAt] DATETIME DEFAULT GETDATE(),
-  CONSTRAINT FK_ExpositionSets_ExpositionAreas FOREIGN KEY ([ExpositionAreaId]) REFERENCES [dbo].[ExpositionAreas] ([Id])
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "ExpositionAreaId" INTEGER NOT NULL,
+  "Name" VARCHAR(255) NOT NULL,
+  "Note" VARCHAR(1000),
+  "ModifiedBy" VARCHAR(64),
+  "ModifiedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT FK_ExpositionSets_ExpositionAreas FOREIGN KEY ("ExpositionAreaId") REFERENCES public."ExpositionAreas" ("Id")
 );
 
-CREATE TABLE [dbo].[Locations]
+CREATE TABLE public."Locations"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [OrganizationLevelId] INT,
-  [ExpositionSetId] INT,
-  [Name] NVARCHAR(255) NOT NULL,
-  [ObjectNumber] INT,
-  [RoomNumber] INT,
-  [AvailableForVisitors] BIT NOT NULL DEFAULT 1,
-  [LocationTypeCode] INT NOT NULL,
-  [AreaM2] DECIMAL(18,2),
-  [CapacityM3] DECIMAL(18,2),
-  [Note] NVARCHAR(1000),
-  [ModifiedBy] NVARCHAR(64),
-  [ModifiedAt] DATETIME DEFAULT GETDATE(),
-  CONSTRAINT FK_Locations_OrganizationLevels FOREIGN KEY ([OrganizationLevelId]) REFERENCES [dbo].[OrganizationLevels] ([Id]),
-  CONSTRAINT FK_Locations_ExpositionSets FOREIGN KEY ([ExpositionSetId]) REFERENCES [dbo].[ExpositionSets] ([Id])
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "OrganizationLevelId" INTEGER,
+  "ExpositionSetId" INTEGER,
+  "Name" VARCHAR(255) NOT NULL,
+  "ObjectNumber" INTEGER,
+  "RoomNumber" INTEGER,
+  "AvailableForVisitors" BOOLEAN NOT NULL DEFAULT 1,
+  "LocationTypeCode" INTEGER NOT NULL,
+  "AreaM2" NUMERIC(18,2),
+  "CapacityM3" NUMERIC(18,2),
+  "Note" VARCHAR(1000),
+  "ModifiedBy" VARCHAR(64),
+  "ModifiedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT FK_Locations_OrganizationLevels FOREIGN KEY ("OrganizationLevelId") REFERENCES public."OrganizationLevels" ("Id"),
+  CONSTRAINT FK_Locations_ExpositionSets FOREIGN KEY ("ExpositionSetId") REFERENCES public."ExpositionSets" ("Id")
 );
 
 -- LOOKUP TABLES
 
 -- ADRUH
-CREATE TABLE [dbo].[ContractTypes]
+CREATE TABLE public."ContractTypes"
 (
-  [Code] VARCHAR(5) NOT NULL PRIMARY KEY,
-  [Sort] INT NOT NULL UNIQUE,
-  [DisplayName] NVARCHAR(32) NOT NULL UNIQUE,
-  [Note] NVARCHAR(256)
+  "Code" VARCHAR(5) NOT NULL PRIMARY KEY,
+  "Sort" INTEGER NOT NULL UNIQUE,
+  "DisplayName" VARCHAR(32) NOT NULL UNIQUE,
+  "Note" VARCHAR(256)
 );
 
 -- NOTE: new lookup table
-CREATE TABLE [dbo].[ContractMovementReasons]
+CREATE TABLE public."ContractMovementReasons"
 (
-  [Code] VARCHAR(5) NOT NULL PRIMARY KEY,
-  [Sort] INT NOT NULL UNIQUE,
-  [DisplayName] NVARCHAR(32) NOT NULL UNIQUE,
-  [Note] NVARCHAR(256)
+  "Code" VARCHAR(5) NOT NULL PRIMARY KEY,
+  "Sort" INTEGER NOT NULL UNIQUE,
+  "DisplayName" VARCHAR(32) NOT NULL UNIQUE,
+  "Note" VARCHAR(256)
 );
 
 -- AUKON
-CREATE TABLE [dbo].[ContractActionTypes]
+CREATE TABLE public."ContractActionTypes"
 (
-  [Code] VARCHAR(5) NOT NULL PRIMARY KEY,
-  [Sort] INT NOT NULL UNIQUE,
-  [DisplayName] NVARCHAR(32) NOT NULL UNIQUE,
-  [Note] NVARCHAR(256)
+  "Code" VARCHAR(5) NOT NULL PRIMARY KEY,
+  "Sort" INTEGER NOT NULL UNIQUE,
+  "DisplayName" VARCHAR(32) NOT NULL UNIQUE,
+  "Note" VARCHAR(256)
 );
 
 -- AUCASTNIK
-CREATE TABLE [dbo].[ContractActionInitiators]
+CREATE TABLE public."ContractActionInitiators"
 (
-  [Code] VARCHAR(5) NOT NULL PRIMARY KEY,
-  [Sort] INT NOT NULL UNIQUE,
-  [DisplayName] NVARCHAR(32) NOT NULL UNIQUE,
-  [Note] NVARCHAR(256)
+  "Code" VARCHAR(5) NOT NULL PRIMARY KEY,
+  "Sort" INTEGER NOT NULL UNIQUE,
+  "DisplayName" VARCHAR(32) NOT NULL UNIQUE,
+  "Note" VARCHAR(256)
 );
 
 -- DRUHDRUH
-CREATE TABLE [dbo].[SpeciesDocumentTypes]
+CREATE TABLE public."SpeciesDocumentTypes"
 (
-  [Code] VARCHAR(5) NOT NULL PRIMARY KEY,
-  [Sort] INT NOT NULL UNIQUE,
-  [DisplayName] NVARCHAR(32) NOT NULL UNIQUE,
-  [Note] NVARCHAR(256)
+  "Code" VARCHAR(5) NOT NULL PRIMARY KEY,
+  "Sort" INTEGER NOT NULL UNIQUE,
+  "DisplayName" VARCHAR(32) NOT NULL UNIQUE,
+  "Note" VARCHAR(256)
 );
 
 -- DRUHEXEMPLAR
-CREATE TABLE [dbo].[SpecimenDocumentTypes]
+CREATE TABLE public."SpecimenDocumentTypes"
 (
-  [Code] VARCHAR(5) NOT NULL PRIMARY KEY,
-  [Sort] INT NOT NULL UNIQUE,
-  [DisplayName] NVARCHAR(32) NOT NULL UNIQUE,
-  [Note] NVARCHAR(256)
+  "Code" VARCHAR(5) NOT NULL PRIMARY KEY,
+  "Sort" INTEGER NOT NULL UNIQUE,
+  "DisplayName" VARCHAR(32) NOT NULL UNIQUE,
+  "Note" VARCHAR(256)
 );
 
 -- AVYKON
-CREATE TABLE [dbo].[RecordActionTypes]
+CREATE TABLE public."RecordActionTypes"
 (
-  [Code] VARCHAR(5) NOT NULL PRIMARY KEY,
-  [Sort] INT NOT NULL UNIQUE,
-  [DisplayName] NVARCHAR(32) NOT NULL UNIQUE,
-  [Note] NVARCHAR(256)
+  "Code" VARCHAR(5) NOT NULL PRIMARY KEY,
+  "Sort" INTEGER NOT NULL UNIQUE,
+  "DisplayName" VARCHAR(32) NOT NULL UNIQUE,
+  "Note" VARCHAR(256)
 );
 
 -- CROCHRANA
-CREATE TABLE [dbo].[SpeciesProtectionTypes]
+CREATE TABLE public."SpeciesProtectionTypes"
 (
-  [Code] VARCHAR(5) NOT NULL PRIMARY KEY,
-  [Sort] INT NOT NULL UNIQUE,
-  [DisplayName] NVARCHAR(32) NOT NULL UNIQUE,
-  [Note] NVARCHAR(256)
+  "Code" VARCHAR(5) NOT NULL PRIMARY KEY,
+  "Sort" INTEGER NOT NULL UNIQUE,
+  "DisplayName" VARCHAR(32) NOT NULL UNIQUE,
+  "Note" VARCHAR(256)
 );
 
 -- NOTE: new lookup table
-CREATE TABLE [dbo].[ZooStatuses]
+CREATE TABLE public."ZooStatuses"
 (
-  [Code] VARCHAR(5) NOT NULL PRIMARY KEY,
-  [Sort] INT NOT NULL UNIQUE,
-  [DisplayName] NVARCHAR(32) NOT NULL UNIQUE,
-  [Note] NVARCHAR(256),
-);
+  "Code" VARCHAR(5) NOT NULL PRIMARY KEY,
+  "Sort" INTEGER NOT NULL UNIQUE,
+  "DisplayName" VARCHAR(32) NOT NULL UNIQUE,
+  "Note" VARCHAR(256));
 
 -- RDB
-CREATE TABLE [dbo].[RdbCodes] -- RDB?
+CREATE TABLE public."RdbCodes" -- RDB?
 (
-  [Code] VARCHAR(5) NOT NULL PRIMARY KEY,
-  [Sort] INT NOT NULL UNIQUE,
-  [DisplayName] NVARCHAR(32) NOT NULL UNIQUE,
-  [Note] NVARCHAR(256),
-);
+  "Code" VARCHAR(5) NOT NULL PRIMARY KEY,
+  "Sort" INTEGER NOT NULL UNIQUE,
+  "DisplayName" VARCHAR(32) NOT NULL UNIQUE,
+  "Note" VARCHAR(256));
 
 -- AZNACENI
-CREATE TABLE [dbo].[MarkingTypes]
+CREATE TABLE public."MarkingTypes"
 (
-  [Code] VARCHAR(5) NOT NULL PRIMARY KEY,
-  [Sort] INT NOT NULL UNIQUE,
-  [DisplayName] NVARCHAR(32) NOT NULL UNIQUE,
-  [Note] NVARCHAR(256)
+  "Code" VARCHAR(5) NOT NULL PRIMARY KEY,
+  "Sort" INTEGER NOT NULL UNIQUE,
+  "DisplayName" VARCHAR(32) NOT NULL UNIQUE,
+  "Note" VARCHAR(256)
 );
 
 -- CITES
-CREATE TABLE [dbo].[SpeciesCiteTypes]
+CREATE TABLE public."SpeciesCiteTypes"
 (
-  [Code] VARCHAR(5) NOT NULL PRIMARY KEY,
-  [Sort] INT NOT NULL UNIQUE,
-  [DisplayName] NVARCHAR(32) NOT NULL UNIQUE,
-  [Note] NVARCHAR(256)
+  "Code" VARCHAR(5) NOT NULL PRIMARY KEY,
+  "Sort" INTEGER NOT NULL UNIQUE,
+  "DisplayName" VARCHAR(32) NOT NULL UNIQUE,
+  "Note" VARCHAR(256)
 );
 
 -- new lookup table
-CREATE TABLE [dbo].[ClassificationTypes]
+CREATE TABLE public."ClassificationTypes"
 (
-  [Code] VARCHAR(5) NOT NULL PRIMARY KEY,
-  [Sort] INT NOT NULL UNIQUE,
-  [DisplayName] NVARCHAR(32) NOT NULL UNIQUE,
-  [Note] NVARCHAR(256)
+  "Code" VARCHAR(5) NOT NULL PRIMARY KEY,
+  "Sort" INTEGER NOT NULL UNIQUE,
+  "DisplayName" VARCHAR(32) NOT NULL UNIQUE,
+  "Note" VARCHAR(256)
 );
 
 -- POHLAVI
-CREATE TABLE [dbo].[GenderTypes]
+CREATE TABLE public."GenderTypes"
 (
-  [Code] VARCHAR(5) NOT NULL PRIMARY KEY,
-  [Sort] INT NOT NULL UNIQUE,
-  [DisplayName] NVARCHAR(32) NOT NULL UNIQUE,
-  [Note] NVARCHAR(256)
+  "Code" VARCHAR(5) NOT NULL PRIMARY KEY,
+  "Sort" INTEGER NOT NULL UNIQUE,
+  "DisplayName" VARCHAR(32) NOT NULL UNIQUE,
+  "Note" VARCHAR(256)
 );
 
 -- EU
-CREATE TABLE [dbo].[EuCodes]
+CREATE TABLE public."EuCodes"
 (
-  [Code] VARCHAR(5) NOT NULL PRIMARY KEY,
-  [Sort] INT NOT NULL UNIQUE,
-  [DisplayName] NVARCHAR(32) NOT NULL UNIQUE,
-  [Note] NVARCHAR(256)
+  "Code" VARCHAR(5) NOT NULL PRIMARY KEY,
+  "Sort" INTEGER NOT NULL UNIQUE,
+  "DisplayName" VARCHAR(32) NOT NULL UNIQUE,
+  "Note" VARCHAR(256)
 );
 
 -- REGPUVOD
-CREATE TABLE [dbo].[OriginTypes]
+CREATE TABLE public."OriginTypes"
 (
-  [Code] VARCHAR(5) NOT NULL PRIMARY KEY,
-  [Sort] INT NOT NULL UNIQUE,
-  [DisplayName] NVARCHAR(32) NOT NULL UNIQUE,
-  [Note] NVARCHAR(256)
+  "Code" VARCHAR(5) NOT NULL PRIMARY KEY,
+  "Sort" INTEGER NOT NULL UNIQUE,
+  "DisplayName" VARCHAR(32) NOT NULL UNIQUE,
+  "Note" VARCHAR(256)
 );
 
 -- PRIRUSTEK
-CREATE TABLE [dbo].[IncrementReasons]
+CREATE TABLE public."IncrementReasons"
 (
-  [Code] VARCHAR(5) NOT NULL PRIMARY KEY,
-  [Sort] INT NOT NULL UNIQUE,
-  [DisplayName] NVARCHAR(32) NOT NULL UNIQUE,
-  [Note] NVARCHAR(256)
+  "Code" VARCHAR(5) NOT NULL PRIMARY KEY,
+  "Sort" INTEGER NOT NULL UNIQUE,
+  "DisplayName" VARCHAR(32) NOT NULL UNIQUE,
+  "Note" VARCHAR(256)
 );
 
 -- UBYTEK 
-CREATE TABLE [dbo].[DecrementReasons] -- NOTE: why order starts from 100 in the original table? 
+CREATE TABLE public."DecrementReasons" -- NOTE: why order starts from 100 in the original table? 
 (
-  [Code] VARCHAR(5) NOT NULL PRIMARY KEY,
-  [Sort] INT NOT NULL UNIQUE,
-  [DisplayName] NVARCHAR(32) NOT NULL UNIQUE,
-  [Note] NVARCHAR(256)
+  "Code" VARCHAR(5) NOT NULL PRIMARY KEY,
+  "Sort" INTEGER NOT NULL UNIQUE,
+  "DisplayName" VARCHAR(32) NOT NULL UNIQUE,
+  "Note" VARCHAR(256)
 );
 
 -- ODCHOV (Rearing)
-CREATE TABLE [dbo].[Rearings]
+CREATE TABLE public."Rearings"
 (
-  [Code] VARCHAR(5) NOT NULL PRIMARY KEY,
-  [Sort] INT NOT NULL UNIQUE,
-  [DisplayName] NVARCHAR(32) NOT NULL UNIQUE,
-  [Note] NVARCHAR(256)
+  "Code" VARCHAR(5) NOT NULL PRIMARY KEY,
+  "Sort" INTEGER NOT NULL UNIQUE,
+  "DisplayName" VARCHAR(32) NOT NULL UNIQUE,
+  "Note" VARCHAR(256)
 );
 
 -- NAROZENI ZPUSOB (Birth Method)
-CREATE TABLE [dbo].[BirthMethods]
+CREATE TABLE public."BirthMethods"
 (
-  [Code] VARCHAR(5) NOT NULL PRIMARY KEY,
-  [Sort] INT NOT NULL UNIQUE,
-  [DisplayName] NVARCHAR(32) NOT NULL UNIQUE,
-  [Note] NVARCHAR(256)
+  "Code" VARCHAR(5) NOT NULL PRIMARY KEY,
+  "Sort" INTEGER NOT NULL UNIQUE,
+  "DisplayName" VARCHAR(32) NOT NULL UNIQUE,
+  "Note" VARCHAR(256)
 );
 
-CREATE TABLE [dbo].[Sections]
+CREATE TABLE public."Sections"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [SectionName] NVARCHAR(128) NOT NULL,
-  [Code] NVARCHAR(3)
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "SectionName" VARCHAR(128) NOT NULL,
+  "Code" VARCHAR(3)
 );
 
 -- RAJON
-CREATE TABLE [dbo].[Regions]
+CREATE TABLE public."Regions"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [SectionId] INT NOT NULL,
-  [Name] NVARCHAR(128) NOT NULL,
-  [Code] NVARCHAR(4),
-  [OperationNote] NVARCHAR(32),
-  CONSTRAINT FK_Regions_Sections FOREIGN KEY ([SectionId]) REFERENCES [dbo].[Sections]([Id])
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "SectionId" INTEGER NOT NULL,
+  "Name" VARCHAR(128) NOT NULL,
+  "Code" VARCHAR(4),
+  "OperationNote" VARCHAR(32),
+  CONSTRAINT FK_Regions_Sections FOREIGN KEY ("SectionId") REFERENCES public."Sections"("Id")
 );
 
 -- KMEN (Only for invertebrates)
-CREATE TABLE [dbo].[TaxonomyPhyla]
+CREATE TABLE public."TaxonomyPhyla"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [NameCz] NVARCHAR(128),
-  [NameLat] NVARCHAR(128),
-  [NameEn] NVARCHAR(128),
-  [NameSk] NVARCHAR(128),
-  [Code] NVARCHAR(3),
-  [ZooStatus] VARCHAR(5),
-  [ModifiedBy] NVARCHAR(64),
-  [ModifiedAt] DATETIME DEFAULT GETDATE(),
-  [QuantityOwned] INT NOT NULL DEFAULT 0,
-  [QuantityInZoo] INT NOT NULL DEFAULT 0,
-  [QuantityDeponatedFrom] INT NOT NULL DEFAULT 0,
-  [QuantityDeponatedTo] INT NOT NULL DEFAULT 0,
-  [IsVertebrate] BIT NOT NULL DEFAULT(0),
-  CONSTRAINT FK_TaxonomyPhyla_ZooStatuses FOREIGN KEY ([ZooStatus]) REFERENCES [dbo].[ZooStatuses]([Code])
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "NameCz" VARCHAR(128),
+  "NameLat" VARCHAR(128),
+  "NameEn" VARCHAR(128),
+  "NameSk" VARCHAR(128),
+  "Code" VARCHAR(3),
+  "ZooStatus" VARCHAR(5),
+  "ModifiedBy" VARCHAR(64),
+  "ModifiedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  "QuantityOwned" INTEGER NOT NULL DEFAULT 0,
+  "QuantityInZoo" INTEGER NOT NULL DEFAULT 0,
+  "QuantityDeponatedFrom" INTEGER NOT NULL DEFAULT 0,
+  "QuantityDeponatedTo" INTEGER NOT NULL DEFAULT 0,
+  "IsVertebrate" BOOLEAN NOT NULL DEFAULT(0),
+  CONSTRAINT FK_TaxonomyPhyla_ZooStatuses FOREIGN KEY ("ZooStatus") REFERENCES public."ZooStatuses"("Code")
 );
 
 -- TRIDA
-CREATE TABLE [dbo].[TaxonomyClasses]
+CREATE TABLE public."TaxonomyClasses"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [Code] VARCHAR(2),
-  [NameCz] NVARCHAR(128),
-  [NameLat] NVARCHAR(128),
-  [NameEn] NVARCHAR(128),
-  [NameSk] NVARCHAR(128),
-  [Cryptogram] VARCHAR(5),
-  [ImageName] NVARCHAR(256),
-  [Note] NVARCHAR(MAX),
-  [Synonyms] NVARCHAR(MAX),
-  [ZooStatus] VARCHAR(5),
-  [Shortcut] VARCHAR(3),
-  [SourceType] CHAR(1) NOT NULL,
-  [ModifiedBy] NVARCHAR(64),
-  [ModifiedAt] DATETIME DEFAULT GETDATE(),
-  [QuantityOwned] INT NOT NULL DEFAULT 0,
-  [QuantityInZoo] INT NOT NULL DEFAULT 0,
-  [QuantityDeponatedFrom] INT NOT NULL DEFAULT 0,
-  [QuantityDeponatedTo] INT NOT NULL DEFAULT 0,
-  [TaxonomyPhylumId] INT NULL,
-  CONSTRAINT FK_TaxonomyClasses_ZooStatuses FOREIGN KEY ([ZooStatus]) REFERENCES [dbo].[ZooStatuses]([Code]),
-  CONSTRAINT FK_TaxonomyClasses_TaxonomyPhyla FOREIGN KEY ([TaxonomyPhylumId]) REFERENCES [dbo].[TaxonomyPhyla]([Id])
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "Code" VARCHAR(2),
+  "NameCz" VARCHAR(128),
+  "NameLat" VARCHAR(128),
+  "NameEn" VARCHAR(128),
+  "NameSk" VARCHAR(128),
+  "Cryptogram" VARCHAR(5),
+  "ImageName" VARCHAR(256),
+  "Note" TEXT,
+  "Synonyms" TEXT,
+  "ZooStatus" VARCHAR(5),
+  "Shortcut" VARCHAR(3),
+  "SourceType" CHAR(1) NOT NULL,
+  "ModifiedBy" VARCHAR(64),
+  "ModifiedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  "QuantityOwned" INTEGER NOT NULL DEFAULT 0,
+  "QuantityInZoo" INTEGER NOT NULL DEFAULT 0,
+  "QuantityDeponatedFrom" INTEGER NOT NULL DEFAULT 0,
+  "QuantityDeponatedTo" INTEGER NOT NULL DEFAULT 0,
+  "TaxonomyPhylumId" INTEGER NULL,
+  CONSTRAINT FK_TaxonomyClasses_ZooStatuses FOREIGN KEY ("ZooStatus") REFERENCES public."ZooStatuses"("Code"),
+  CONSTRAINT FK_TaxonomyClasses_TaxonomyPhyla FOREIGN KEY ("TaxonomyPhylumId") REFERENCES public."TaxonomyPhyla"("Id")
 );
 
 -- RAD
-CREATE TABLE [dbo].[TaxonomyOrders]
+CREATE TABLE public."TaxonomyOrders"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [TaxonomyClassId] INT NOT NULL,
-  [Code] VARCHAR(2),
-  [NameCz] NVARCHAR(128),
-  [NameLat] NVARCHAR(128),
-  [NameEn] NVARCHAR(128),
-  [NameSk] NVARCHAR(128),
-  [Note] NVARCHAR(MAX),
-  [Synonyms] NVARCHAR(MAX),
-  [ZooStatus] VARCHAR(5),
-  [SourceType] CHAR(1) NOT NULL,
-  [ModifiedBy] NVARCHAR(64),
-  [ModifiedAt] DATETIME DEFAULT GETDATE(),
-  [QuantityOwned] INT NOT NULL DEFAULT 0,
-  [QuantityInZoo] INT NOT NULL DEFAULT 0,
-  [QuantityDeponatedFrom] INT NOT NULL DEFAULT 0,
-  [QuantityDeponatedTo] INT NOT NULL DEFAULT 0,
-  CONSTRAINT FK_TaxonomyOrders_TaxonomyClasses FOREIGN KEY ([TaxonomyClassId]) REFERENCES [dbo].[TaxonomyClasses]([Id]),
-  CONSTRAINT FK_TaxonomyOrders_ZooStatuses FOREIGN KEY ([ZooStatus]) REFERENCES [dbo].[ZooStatuses]([Code])
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "TaxonomyClassId" INTEGER NOT NULL,
+  "Code" VARCHAR(2),
+  "NameCz" VARCHAR(128),
+  "NameLat" VARCHAR(128),
+  "NameEn" VARCHAR(128),
+  "NameSk" VARCHAR(128),
+  "Note" TEXT,
+  "Synonyms" TEXT,
+  "ZooStatus" VARCHAR(5),
+  "SourceType" CHAR(1) NOT NULL,
+  "ModifiedBy" VARCHAR(64),
+  "ModifiedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  "QuantityOwned" INTEGER NOT NULL DEFAULT 0,
+  "QuantityInZoo" INTEGER NOT NULL DEFAULT 0,
+  "QuantityDeponatedFrom" INTEGER NOT NULL DEFAULT 0,
+  "QuantityDeponatedTo" INTEGER NOT NULL DEFAULT 0,
+  CONSTRAINT FK_TaxonomyOrders_TaxonomyClasses FOREIGN KEY ("TaxonomyClassId") REFERENCES public."TaxonomyClasses"("Id"),
+  CONSTRAINT FK_TaxonomyOrders_ZooStatuses FOREIGN KEY ("ZooStatus") REFERENCES public."ZooStatuses"("Code")
 );
 
 -- CELED
-CREATE TABLE [dbo].[TaxonomyFamilies]
+CREATE TABLE public."TaxonomyFamilies"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [TaxonomyOrderId] INT NOT NULL,
-  [NameCz] NVARCHAR(128),
-  [NameLat] NVARCHAR(128),
-  [NameEn] NVARCHAR(128),
-  [NameSk] NVARCHAR(128),
-  [Code] NVARCHAR(3),
-  [Note] NVARCHAR(MAX),
-  [Synonyms] NVARCHAR(MAX),
-  [ZooStatus] VARCHAR(5),
-  [SourceType] CHAR(1) NOT NULL,
-  [ModifiedBy] NVARCHAR(64),
-  [ModifiedAt] DATETIME DEFAULT GETDATE(),
-  [QuantityOwned] INT NOT NULL DEFAULT 0,
-  [QuantityInZoo] INT NOT NULL DEFAULT 0,
-  [QuantityDeponatedFrom] INT NOT NULL DEFAULT 0,
-  [QuantityDeponatedTo] INT NOT NULL DEFAULT 0,
-  CONSTRAINT FK_TaxonomyFamilies_TaxonomyOrders FOREIGN KEY ([TaxonomyOrderId]) REFERENCES [dbo].[TaxonomyOrders]([Id]),
-  CONSTRAINT FK_TaxonomyFamilies_ZooStatuses FOREIGN KEY ([ZooStatus]) REFERENCES [dbo].[ZooStatuses]([Code])
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "TaxonomyOrderId" INTEGER NOT NULL,
+  "NameCz" VARCHAR(128),
+  "NameLat" VARCHAR(128),
+  "NameEn" VARCHAR(128),
+  "NameSk" VARCHAR(128),
+  "Code" VARCHAR(3),
+  "Note" TEXT,
+  "Synonyms" TEXT,
+  "ZooStatus" VARCHAR(5),
+  "SourceType" CHAR(1) NOT NULL,
+  "ModifiedBy" VARCHAR(64),
+  "ModifiedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  "QuantityOwned" INTEGER NOT NULL DEFAULT 0,
+  "QuantityInZoo" INTEGER NOT NULL DEFAULT 0,
+  "QuantityDeponatedFrom" INTEGER NOT NULL DEFAULT 0,
+  "QuantityDeponatedTo" INTEGER NOT NULL DEFAULT 0,
+  CONSTRAINT FK_TaxonomyFamilies_TaxonomyOrders FOREIGN KEY ("TaxonomyOrderId") REFERENCES public."TaxonomyOrders"("Id"),
+  CONSTRAINT FK_TaxonomyFamilies_ZooStatuses FOREIGN KEY ("ZooStatus") REFERENCES public."ZooStatuses"("Code")
 );
 
 -- ROD
-CREATE TABLE [dbo].[TaxonomyGenera]
+CREATE TABLE public."TaxonomyGenera"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [TaxonomyFamilyId] INT NOT NULL,
-  [NameCz] NVARCHAR(128),
-  [NameLat] NVARCHAR(128),
-  [NameEn] NVARCHAR(128),
-  [NameSk] NVARCHAR(128),
-  [Code] NVARCHAR(3),
-  [ZooStatus] VARCHAR(5),
-  [SourceType] CHAR(1) NOT NULL,
-  [ModifiedBy] NVARCHAR(64),
-  [ModifiedAt] DATETIME DEFAULT GETDATE(),
-  [QuantityOwned] INT NOT NULL DEFAULT 0,
-  [QuantityInZoo] INT NOT NULL DEFAULT 0,
-  [QuantityDeponatedFrom] INT NOT NULL DEFAULT 0,
-  [QuantityDeponatedTo] INT NOT NULL DEFAULT 0,
-  CONSTRAINT FK_TaxonomyGenera_TaxonomyFamilies FOREIGN KEY ([TaxonomyFamilyId]) REFERENCES [dbo].[TaxonomyFamilies]([Id]),
-  CONSTRAINT FK_TaxonomyGenera_ZooStatuses FOREIGN KEY ([ZooStatus]) REFERENCES [dbo].[ZooStatuses]([Code])
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "TaxonomyFamilyId" INTEGER NOT NULL,
+  "NameCz" VARCHAR(128),
+  "NameLat" VARCHAR(128),
+  "NameEn" VARCHAR(128),
+  "NameSk" VARCHAR(128),
+  "Code" VARCHAR(3),
+  "ZooStatus" VARCHAR(5),
+  "SourceType" CHAR(1) NOT NULL,
+  "ModifiedBy" VARCHAR(64),
+  "ModifiedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  "QuantityOwned" INTEGER NOT NULL DEFAULT 0,
+  "QuantityInZoo" INTEGER NOT NULL DEFAULT 0,
+  "QuantityDeponatedFrom" INTEGER NOT NULL DEFAULT 0,
+  "QuantityDeponatedTo" INTEGER NOT NULL DEFAULT 0,
+  CONSTRAINT FK_TaxonomyGenera_TaxonomyFamilies FOREIGN KEY ("TaxonomyFamilyId") REFERENCES public."TaxonomyFamilies"("Id"),
+  CONSTRAINT FK_TaxonomyGenera_ZooStatuses FOREIGN KEY ("ZooStatus") REFERENCES public."ZooStatuses"("Code")
 );
 
 -- DRUH
-CREATE TABLE [dbo].[Species]
+CREATE TABLE public."Species"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [TaxonomyGenusId] INT NOT NULL,
-  [Code] NVARCHAR(6),
-  [NameCz] NVARCHAR(128),
-  [NameLat] NVARCHAR(128),
-  [NameEn] NVARCHAR(128),
-  [NameGe] NVARCHAR(128),
-  [NameSk] NVARCHAR(128),
-  [Card] NVARCHAR(10),
-  [RdbCode] VARCHAR(5),
-  [CiteType] VARCHAR(5),
-  [ProtectionType] VARCHAR(5),
-  [IsEep] BIT NOT NULL DEFAULT(0),
-  [IsEsb] BIT NOT NULL DEFAULT(0),
-  [IsIsb] BIT NOT NULL DEFAULT(0),
-  [IsGenePool] BIT NOT NULL DEFAULT(0),
-  [ClassificationType] VARCHAR(5) NOT NULL,
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "TaxonomyGenusId" INTEGER NOT NULL,
+  "Code" VARCHAR(6),
+  "NameCz" VARCHAR(128),
+  "NameLat" VARCHAR(128),
+  "NameEn" VARCHAR(128),
+  "NameGe" VARCHAR(128),
+  "NameSk" VARCHAR(128),
+  "Card" VARCHAR(10),
+  "RdbCode" VARCHAR(5),
+  "CiteType" VARCHAR(5),
+  "ProtectionType" VARCHAR(5),
+  "IsEep" BOOLEAN NOT NULL DEFAULT(0),
+  "IsEsb" BOOLEAN NOT NULL DEFAULT(0),
+  "IsIsb" BOOLEAN NOT NULL DEFAULT(0),
+  "IsGenePool" BOOLEAN NOT NULL DEFAULT(0),
+  "ClassificationType" VARCHAR(5) NOT NULL,
   -- NOTE: can be boolean?
-  [ZooStatus] VARCHAR(5),
-  [Price] DECIMAL(18,2),
-  [RegionId] INT,
-  [Note] NVARCHAR(MAX),
-  [Synonyms] NVARCHAR(MAX),
-  [Description] NVARCHAR(MAX),
-  [FeedingRate] NVARCHAR(1),
-  [Photo] VARBINARY(MAX),
-  [UcszCoef] NVARCHAR(6),
-  [EuCode] VARCHAR(5),
+  "ZooStatus" VARCHAR(5),
+  "Price" NUMERIC(18,2),
+  "RegionId" INTEGER,
+  "Note" TEXT,
+  "Synonyms" TEXT,
+  "Description" TEXT,
+  "FeedingRate" VARCHAR(1),
+  "Photo" BYTEA,
+  "UcszCoef" VARCHAR(6),
+  "EuCode" VARCHAR(5),
   -- NOTE: What EU? What does that mean? regulation, protection or what?
-  [IsRegulationRequirement] BIT NOT NULL DEFAULT(0),
-  [GroupType] NVARCHAR(1),
-  [IsEuFauna] BIT NOT NULL DEFAULT(0),
-  [EuFaunaRefNumber] NVARCHAR(200),
-  [CrExceptionRefNumber] NVARCHAR(200),
-  [RdbCodePrevious] VARCHAR(5),
-  [AvgMinDepositInk] NVARCHAR(8),
+  "IsRegulationRequirement" BOOLEAN NOT NULL DEFAULT(0),
+  "GroupType" VARCHAR(1),
+  "IsEuFauna" BOOLEAN NOT NULL DEFAULT(0),
+  "EuFaunaRefNumber" VARCHAR(200),
+  "CrExceptionRefNumber" VARCHAR(200),
+  "RdbCodePrevious" VARCHAR(5),
+  "AvgMinDepositInk" VARCHAR(8),
   -- NOTE: Not used, please confirm with Drozda. this is probably value related to incubation (minimal decrease)
-  [AvgMaxDepositInk] NVARCHAR(8),
+  "AvgMaxDepositInk" VARCHAR(8),
   -- NOTE: Not used, please confirm with Drozda. this is probably value related to incubation (max decrease)
-  [AvgDurationInk] NVARCHAR(8),
+  "AvgDurationInk" VARCHAR(8),
   -- NOTE: Not used, please confirm with Drozda. this is probably value related to incubation
-  [GroupId] INT,
+  "GroupId" INTEGER,
   -- NOTE: integer value probably relation FK or id from external system. Confirm with Drozada or find relation. 
-  [Documentation] NVARCHAR(256),
-  [SourceType] CHAR(1) NOT NULL,
-  [ModifiedBy] NVARCHAR(64),
-  [ModifiedAt] DATETIME DEFAULT GETDATE(),
-  [QuantityOwned] INT NOT NULL DEFAULT 0,
-  [QuantityInZoo] INT NOT NULL DEFAULT 0,
-  [QuantityDeponatedFrom] INT NOT NULL DEFAULT 0,
-  [QuantityDeponatedTo] INT NOT NULL DEFAULT 0,
-  CONSTRAINT FK_Species_Genera FOREIGN KEY ([TaxonomyGenusId]) REFERENCES [dbo].[TaxonomyGenera]([Id]),
-  CONSTRAINT FK_Species_ZooStatuses FOREIGN KEY ([ZooStatus]) REFERENCES [dbo].[ZooStatuses]([Code]),
-  CONSTRAINT FK_Species_RdbCodes FOREIGN KEY ([RdbCode]) REFERENCES [dbo].[RdbCodes]([Code]),
-  CONSTRAINT FK_Species_RdbCodes_Prev FOREIGN KEY ([RdbCodePrevious]) REFERENCES [dbo].[RdbCodes]([Code]),
-  CONSTRAINT FK_Species_SpeciesCiteTypes FOREIGN KEY ([CiteType]) REFERENCES [dbo].[SpeciesCiteTypes]([Code]),
-  CONSTRAINT FK_Species_SpeciesProtectionTypes FOREIGN KEY ([ProtectionType]) REFERENCES [dbo].[SpeciesProtectionTypes]([Code]),
-  CONSTRAINT FK_Species_EuCodes FOREIGN KEY ([EuCode]) REFERENCES [dbo].[EuCodes]([Code]),
-  CONSTRAINT FK_Species_ClassificationTypes FOREIGN KEY ([ClassificationType]) REFERENCES [dbo].[ClassificationTypes]([Code])
+  "Documentation" VARCHAR(256),
+  "SourceType" CHAR(1) NOT NULL,
+  "ModifiedBy" VARCHAR(64),
+  "ModifiedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  "QuantityOwned" INTEGER NOT NULL DEFAULT 0,
+  "QuantityInZoo" INTEGER NOT NULL DEFAULT 0,
+  "QuantityDeponatedFrom" INTEGER NOT NULL DEFAULT 0,
+  "QuantityDeponatedTo" INTEGER NOT NULL DEFAULT 0,
+  CONSTRAINT FK_Species_Genera FOREIGN KEY ("TaxonomyGenusId") REFERENCES public."TaxonomyGenera"("Id"),
+  CONSTRAINT FK_Species_ZooStatuses FOREIGN KEY ("ZooStatus") REFERENCES public."ZooStatuses"("Code"),
+  CONSTRAINT FK_Species_RdbCodes FOREIGN KEY ("RdbCode") REFERENCES public."RdbCodes"("Code"),
+  CONSTRAINT FK_Species_RdbCodes_Prev FOREIGN KEY ("RdbCodePrevious") REFERENCES public."RdbCodes"("Code"),
+  CONSTRAINT FK_Species_SpeciesCiteTypes FOREIGN KEY ("CiteType") REFERENCES public."SpeciesCiteTypes"("Code"),
+  CONSTRAINT FK_Species_SpeciesProtectionTypes FOREIGN KEY ("ProtectionType") REFERENCES public."SpeciesProtectionTypes"("Code"),
+  CONSTRAINT FK_Species_EuCodes FOREIGN KEY ("EuCode") REFERENCES public."EuCodes"("Code"),
+  CONSTRAINT FK_Species_ClassificationTypes FOREIGN KEY ("ClassificationType") REFERENCES public."ClassificationTypes"("Code")
 );
 
 -- EXEMPLAR
-CREATE TABLE [dbo].[Specimens]
+CREATE TABLE public."Specimens"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [SpeciesId] INT NOT NULL,
-  [AccessionNumber] INT,
-  [GenderType] VARCHAR(5),
-  [ClassificationType] VARCHAR(5) NOT NULL,
-  [Zims] NVARCHAR(6),
-  [StudBookNumber] NVARCHAR(32),
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "SpeciesId" INTEGER NOT NULL,
+  "AccessionNumber" INTEGER,
+  "GenderType" VARCHAR(5),
+  "ClassificationType" VARCHAR(5) NOT NULL,
+  "Zims" VARCHAR(6),
+  "StudBookNumber" VARCHAR(32),
   -- Stud? PLEM is breed? -> yes it is breed = plemenna kniha
-  [StudBookName] NVARCHAR(32),
-  [Name] NVARCHAR(128),
-  [Notch] NVARCHAR(128),
-  [Chip] NVARCHAR(128),
-  [RingNumber] NVARCHAR(128),
-  [OtherMarking] NVARCHAR(128),
-  [IsHybrid] BIT NOT NULL DEFAULT(0),
-  [Location] NVARCHAR(40),
-  [IsFree] BIT NOT NULL DEFAULT(0),
+  "StudBookName" VARCHAR(32),
+  "Name" VARCHAR(128),
+  "Notch" VARCHAR(128),
+  "Chip" VARCHAR(128),
+  "RingNumber" VARCHAR(128),
+  "OtherMarking" VARCHAR(128),
+  "IsHybrid" BOOLEAN NOT NULL DEFAULT(0),
+  "Location" VARCHAR(40),
+  "IsFree" BOOLEAN NOT NULL DEFAULT(0),
   -- NOTE: does it mean something like safari?
-  [BirthDate] NVARCHAR(16),
-  [BirthPlace] NVARCHAR(32),
-  [BirthMethod] NVARCHAR(16),
-  [Rearing] NVARCHAR(10),
-  [FatherId] INT,
-  [MotherId] INT,
-  [Note] NVARCHAR(MAX),
-  [OtherDetails] NVARCHAR(MAX),
-  [Photo] VARBINARY(MAX),
-  [RegisteredDate] NVARCHAR(10),
-  [RegisteredTo] NVARCHAR(32),
-  [RegistrationNumber] NVARCHAR(128),
-  [CadaverDate] NVARCHAR(16),
-  [CadaverPlace] NVARCHAR(32),
-  [EuPermit] NVARCHAR(48),
-  [CzechRegistrationNumber] NVARCHAR(48),
-  [FatherZims] NVARCHAR(32),
-  [MotherZims] NVARCHAR(32),
-  [RingNumberSecondary] NVARCHAR(128),
-  [OtherMarkingSecondary] NVARCHAR(128),
-  [ChipSecondary] NVARCHAR(128),
-  [NotchSecondary] NVARCHAR(128),
-  [Documentation] NVARCHAR(256),
+  "BirthDate" VARCHAR(16),
+  "BirthPlace" VARCHAR(32),
+  "BirthMethod" VARCHAR(16),
+  "Rearing" VARCHAR(10),
+  "FatherId" INTEGER,
+  "MotherId" INTEGER,
+  "Note" TEXT,
+  "OtherDetails" TEXT,
+  "Photo" BYTEA,
+  "RegisteredDate" VARCHAR(10),
+  "RegisteredTo" VARCHAR(32),
+  "RegistrationNumber" VARCHAR(128),
+  "CadaverDate" VARCHAR(16),
+  "CadaverPlace" VARCHAR(32),
+  "EuPermit" VARCHAR(48),
+  "CzechRegistrationNumber" VARCHAR(48),
+  "FatherZims" VARCHAR(32),
+  "MotherZims" VARCHAR(32),
+  "RingNumberSecondary" VARCHAR(128),
+  "OtherMarkingSecondary" VARCHAR(128),
+  "ChipSecondary" VARCHAR(128),
+  "NotchSecondary" VARCHAR(128),
+  "Documentation" VARCHAR(256),
   -- NOTE: can be probably removed. No record it the table column.
-  [Ueln] NVARCHAR(48),
+  "Ueln" VARCHAR(48),
   -- UELN?
-  [SourceType] CHAR(1) NOT NULL,
-  [ModifiedBy] NVARCHAR(64),
-  [ModifiedAt] DATETIME DEFAULT GETDATE(),
+  "SourceType" CHAR(1) NOT NULL,
+  "ModifiedBy" VARCHAR(64),
+  "ModifiedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
   -- NOTE: Calculated columns
-  [InDate] NVARCHAR(10),
-  [InReason] VARCHAR(5),
-  [InLocationId] INT,
-  [OutDate] NVARCHAR(10),
-  [OutReason] VARCHAR(5),
-  [OutLocationId] INT,
-  [Price] DECIMAL(18,2),
-  [QuantityOwned] INT NOT NULL DEFAULT 0,
-  [QuantityInZoo] INT NOT NULL DEFAULT 0,
-  [QuantityDeponatedFrom] INT NOT NULL DEFAULT 0,
-  [QuantityDeponatedTo] INT NOT NULL DEFAULT 0,
-  [PlacementDate] NVARCHAR(10),
-  [RegionId] INT,
+  "InDate" VARCHAR(10),
+  "InReason" VARCHAR(5),
+  "InLocationId" INTEGER,
+  "OutDate" VARCHAR(10),
+  "OutReason" VARCHAR(5),
+  "OutLocationId" INTEGER,
+  "Price" NUMERIC(18,2),
+  "QuantityOwned" INTEGER NOT NULL DEFAULT 0,
+  "QuantityInZoo" INTEGER NOT NULL DEFAULT 0,
+  "QuantityDeponatedFrom" INTEGER NOT NULL DEFAULT 0,
+  "QuantityDeponatedTo" INTEGER NOT NULL DEFAULT 0,
+  "PlacementDate" VARCHAR(10),
+  "RegionId" INTEGER,
   -- NOTE: NEW PLACEMENTS
-  [PlacementLocationId] INT,
-  [OrganizationLevelId] INT,
-  CONSTRAINT FK_Specimens_Species FOREIGN KEY ([SpeciesId]) REFERENCES [dbo].[Species]([Id]),
-  CONSTRAINT FK_Specimens_Father FOREIGN KEY ([FatherId]) REFERENCES [dbo].[Specimens]([Id]),
-  CONSTRAINT FK_Specimens_Mother FOREIGN KEY ([MotherId]) REFERENCES [dbo].[Specimens]([Id]),
-  CONSTRAINT FK_Specimens_GenderTypes FOREIGN KEY ([GenderType]) REFERENCES [dbo].[GenderTypes]([Code]),
-  CONSTRAINT FK_Specimens_ClassificationTypes FOREIGN KEY ([ClassificationType]) REFERENCES [dbo].[ClassificationTypes]([Code]),
-  CONSTRAINT FK_Specimens_Regions FOREIGN KEY ([RegionId]) REFERENCES [dbo].[Regions]([Id]),
-  CONSTRAINT FK_Specimens_OrganizationLevels FOREIGN KEY ([OrganizationLevelId]) REFERENCES [dbo].[OrganizationLevels]([Id]),
-  CONSTRAINT FK_Specimens_PlacementLocation FOREIGN KEY ([PlacementLocationId]) REFERENCES [dbo].[Locations]([Id])
+  "PlacementLocationId" INTEGER,
+  "OrganizationLevelId" INTEGER,
+  CONSTRAINT FK_Specimens_Species FOREIGN KEY ("SpeciesId") REFERENCES public."Species"("Id"),
+  CONSTRAINT FK_Specimens_Father FOREIGN KEY ("FatherId") REFERENCES public."Specimens"("Id"),
+  CONSTRAINT FK_Specimens_Mother FOREIGN KEY ("MotherId") REFERENCES public."Specimens"("Id"),
+  CONSTRAINT FK_Specimens_GenderTypes FOREIGN KEY ("GenderType") REFERENCES public."GenderTypes"("Code"),
+  CONSTRAINT FK_Specimens_ClassificationTypes FOREIGN KEY ("ClassificationType") REFERENCES public."ClassificationTypes"("Code"),
+  CONSTRAINT FK_Specimens_Regions FOREIGN KEY ("RegionId") REFERENCES public."Regions"("Id"),
+  CONSTRAINT FK_Specimens_OrganizationLevels FOREIGN KEY ("OrganizationLevelId") REFERENCES public."OrganizationLevels"("Id"),
+  CONSTRAINT FK_Specimens_PlacementLocation FOREIGN KEY ("PlacementLocationId") REFERENCES public."Locations"("Id")
 );
 
-CREATE TABLE [dbo].[Partners]
+CREATE TABLE public."Partners"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [Keyword] NVARCHAR(32) NOT NULL,
-  [Name] NVARCHAR(128),
-  [Status] NVARCHAR(32),
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "Keyword" VARCHAR(32) NOT NULL,
+  "Name" VARCHAR(128),
+  "Status" VARCHAR(32),
   -- Probably not correct column name. (STATUT)
-  [City] NVARCHAR(48),
-  [StreetAddress] NVARCHAR(64),
-  [PostalCode] NVARCHAR(10),
-  [Country] NVARCHAR(64),
-  [Phone] NVARCHAR(20),
-  [Fax] NVARCHAR(20),
-  [Email] NVARCHAR(128),
-  [PartnerType] NVARCHAR(4),
+  "City" VARCHAR(48),
+  "StreetAddress" VARCHAR(64),
+  "PostalCode" VARCHAR(10),
+  "Country" VARCHAR(64),
+  "Phone" VARCHAR(20),
+  "Fax" VARCHAR(20),
+  "Email" VARCHAR(128),
+  "PartnerType" VARCHAR(4),
   -- can be removed? no data in the legacy db
-  [LastName] NVARCHAR(32),
-  [FirstName] NVARCHAR(32),
-  [Note] NVARCHAR(MAX)
+  "LastName" VARCHAR(32),
+  "FirstName" VARCHAR(32),
+  "Note" TEXT
 );
 
 -- DOKLADD
-CREATE TABLE [dbo].[DocumentSpecies]
+CREATE TABLE public."DocumentSpecies"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [SpeciesId] INT NOT NULL,
-  [DocumentType] VARCHAR(5) NOT NULL,
-  [Date] NVARCHAR(16),
-  [Number] NVARCHAR(128) NOT NULL,
-  [Note] NVARCHAR(MAX),
-  [IsValid] BIT NOT NULL,
-  [ModifiedBy] NVARCHAR(64),
-  [ModifiedAt] DATETIME DEFAULT GETDATE(),
-  CONSTRAINT FK_DocumentSpecies_Species FOREIGN KEY ([SpeciesId]) REFERENCES [dbo].[Species]([Id]),
-  CONSTRAINT FK_DocumentSpecies_SpeciesDocumentTypes FOREIGN KEY ([DocumentType]) REFERENCES [dbo].[SpeciesDocumentTypes]([Code])
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "SpeciesId" INTEGER NOT NULL,
+  "DocumentType" VARCHAR(5) NOT NULL,
+  "Date" VARCHAR(16),
+  "Number" VARCHAR(128) NOT NULL,
+  "Note" TEXT,
+  "IsValid" BOOLEAN NOT NULL,
+  "ModifiedBy" VARCHAR(64),
+  "ModifiedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT FK_DocumentSpecies_Species FOREIGN KEY ("SpeciesId") REFERENCES public."Species"("Id"),
+  CONSTRAINT FK_DocumentSpecies_SpeciesDocumentTypes FOREIGN KEY ("DocumentType") REFERENCES public."SpeciesDocumentTypes"("Code")
 );
 
 -- DOKLADE
-CREATE TABLE [dbo].[DocumentSpecimens]
+CREATE TABLE public."DocumentSpecimens"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [SpecimenId] INT NOT NULL,
-  [DocumentType] VARCHAR(5) NOT NULL,
-  [Number] NVARCHAR(128) NOT NULL,
-  [Date] NVARCHAR(16),
-  [Partner] NVARCHAR(128),
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "SpecimenId" INTEGER NOT NULL,
+  "DocumentType" VARCHAR(5) NOT NULL,
+  "Number" VARCHAR(128) NOT NULL,
+  "Date" VARCHAR(16),
+  "Partner" VARCHAR(128),
   --  NOTE: it looks like it is string value from the Partners table (investigate)
-  [Note] NVARCHAR(MAX),
-  [IsValid] BIT NOT NULL,
-  [ModifiedBy] NVARCHAR(64),
-  [ModifiedAt] DATETIME DEFAULT GETDATE(),
-  CONSTRAINT FK_DocumentSpecimens_Specimens FOREIGN KEY ([SpecimenId]) REFERENCES [dbo].[Specimens]([Id]),
-  CONSTRAINT FK_DocumentSpecimens_SpecimenDocumentTypes FOREIGN KEY ([DocumentType]) REFERENCES [dbo].[SpecimenDocumentTypes]([Code])
+  "Note" TEXT,
+  "IsValid" BOOLEAN NOT NULL,
+  "ModifiedBy" VARCHAR(64),
+  "ModifiedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT FK_DocumentSpecimens_Specimens FOREIGN KEY ("SpecimenId") REFERENCES public."Specimens"("Id"),
+  CONSTRAINT FK_DocumentSpecimens_SpecimenDocumentTypes FOREIGN KEY ("DocumentType") REFERENCES public."SpecimenDocumentTypes"("Code")
 );
 
 -- KADAVER
-CREATE TABLE [dbo].[Cadavers]
+CREATE TABLE public."Cadavers"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [SpecimenId] INT NOT NULL,
-  [Date] NVARCHAR(16),
-  [Location] NVARCHAR(128),
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "SpecimenId" INTEGER NOT NULL,
+  "Date" VARCHAR(16),
+  "Location" VARCHAR(128),
   -- NOTE: it is not int value as in the Movement table, but it looks like it is string value from the Partners table (investigate)
-  [Note] NVARCHAR(MAX),
-  [Photo] VARBINARY(MAX),
-  [ModifiedBy] NVARCHAR(64),
-  [ModifiedAt] DATETIME DEFAULT GETDATE(),
-  CONSTRAINT FK_Cadavers_Specimens FOREIGN KEY ([SpecimenId]) REFERENCES [dbo].[Specimens]([Id])
+  "Note" TEXT,
+  "Photo" BYTEA,
+  "ModifiedBy" VARCHAR(64),
+  "ModifiedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT FK_Cadavers_Specimens FOREIGN KEY ("SpecimenId") REFERENCES public."Specimens"("Id")
 );
 
 -- KADRESAR
-CREATE TABLE [dbo].[CadaverPartners]
+CREATE TABLE public."CadaverPartners"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [Keyword] NVARCHAR(32) NOT NULL,
-  [Name] NVARCHAR(128),
-  [City] NVARCHAR(48),
-  [StreetAndNumber] NVARCHAR(64),
-  [PostalCode] NVARCHAR(10),
-  [Country] NVARCHAR(64),
-  [Phone] NVARCHAR(20),
-  [Fax] NVARCHAR(20),
-  [Email] NVARCHAR(128),
-  [LastName] NVARCHAR(32),
-  [FirstName] NVARCHAR(32),
-  [Note] NVARCHAR(MAX),
-  [ModifiedBy] NVARCHAR(64),
-  [ModifiedAt] DATETIME DEFAULT GETDATE()
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "Keyword" VARCHAR(32) NOT NULL,
+  "Name" VARCHAR(128),
+  "City" VARCHAR(48),
+  "StreetAndNumber" VARCHAR(64),
+  "PostalCode" VARCHAR(10),
+  "Country" VARCHAR(64),
+  "Phone" VARCHAR(20),
+  "Fax" VARCHAR(20),
+  "Email" VARCHAR(128),
+  "LastName" VARCHAR(32),
+  "FirstName" VARCHAR(32),
+  "Note" TEXT,
+  "ModifiedBy" VARCHAR(64),
+  "ModifiedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- SMLOUVA
-CREATE TABLE [dbo].[Contracts]
+CREATE TABLE public."Contracts"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [Number] NVARCHAR(32) NOT NULL,
-  [Date] NVARCHAR(10) NOT NULL,
-  [MovementReason] VARCHAR(5),
-  [ContractType] VARCHAR(5),
-  [PartnerId] INT,
-  [Note] NVARCHAR(MAX),
-  [NotePrague] NVARCHAR(MAX),
-  [NotePartner] NVARCHAR(MAX),
-  [Year] INT,
-  [ModifiedBy] NVARCHAR(64),
-  [ModifiedAt] DATETIME DEFAULT GETDATE(),
-  CONSTRAINT FK_Contracts_Partners FOREIGN KEY ([PartnerId]) REFERENCES [dbo].[Partners]([Id]),
-  CONSTRAINT FK_Contracts_ContractTypes FOREIGN KEY ([ContractType]) REFERENCES [dbo].[ContractTypes]([Code]),
-  CONSTRAINT FK_Contracts_ContractMovementReasons FOREIGN KEY ([MovementReason]) REFERENCES [dbo].[ContractMovementReasons]([Code])
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "Number" VARCHAR(32) NOT NULL,
+  "Date" VARCHAR(10) NOT NULL,
+  "MovementReason" VARCHAR(5),
+  "ContractType" VARCHAR(5),
+  "PartnerId" INTEGER,
+  "Note" TEXT,
+  "NotePrague" TEXT,
+  "NotePartner" TEXT,
+  "Year" INTEGER,
+  "ModifiedBy" VARCHAR(64),
+  "ModifiedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT FK_Contracts_Partners FOREIGN KEY ("PartnerId") REFERENCES public."Partners"("Id"),
+  CONSTRAINT FK_Contracts_ContractTypes FOREIGN KEY ("ContractType") REFERENCES public."ContractTypes"("Code"),
+  CONSTRAINT FK_Contracts_ContractMovementReasons FOREIGN KEY ("MovementReason") REFERENCES public."ContractMovementReasons"("Code")
 );
 
-CREATE TABLE [dbo].[Movements]
+CREATE TABLE public."Movements"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [SpecimenId] INT NOT NULL,
-  [Date] NVARCHAR(10) NOT NULL,
-  [Quantity] INT NOT NULL,
-  [QuantityActual] INT NOT NULL,
-  [IncrementReason] VARCHAR(5),
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "SpecimenId" INTEGER NOT NULL,
+  "Date" VARCHAR(10) NOT NULL,
+  "Quantity" INTEGER NOT NULL,
+  "QuantityActual" INTEGER NOT NULL,
+  "IncrementReason" VARCHAR(5),
   -- NOTE: Investigate if enum is same as Decrease reason and Contracts.MovementReason
-  [DecrementReason] VARCHAR(5),
-  [LocationId] INT,
+  "DecrementReason" VARCHAR(5),
+  "LocationId" INTEGER,
   -- NOTE: looks like it is ID of the location, probably FK from other table, relation is missing in the original table. (investigate)
-  [CitesImport] NVARCHAR(50),
-  [CitesExport] NVARCHAR(50),
-  [Price] DECIMAL(18,2),
-  [Note] NVARCHAR(MAX),
-  [Gender] NVARCHAR(16),
+  "CitesImport" VARCHAR(50),
+  "CitesExport" VARCHAR(50),
+  "Price" NUMERIC(18,2),
+  "Note" TEXT,
+  "Gender" VARCHAR(16),
   -- NOTE: not gender, What for is this? SDRPOHLAVI => original column name and values are numbers like 0,6 or 0.6.0 etc.
-  [AccountingDate] NVARCHAR(24),
-  [PriceFinal] DECIMAL(18,2),
+  "AccountingDate" VARCHAR(24),
+  "PriceFinal" NUMERIC(18,2),
   -- NOTE: this is price column -> change to decimal and ask if used and purpose. confirm with drozda. 
-  [DepType] CHAR(1),
+  "DepType" CHAR(1),
   -- NOTE: this has values as null, -, + -> , probably not used, confirm with Drozda (deponace?)
-  [ContractNumber] NVARCHAR(32),
+  "ContractNumber" VARCHAR(32),
   -- Is the ContractNumber related to Contracts table? Is it possible to edit? There are no data in the legacy in this column. So can be probably removed.
-  [ContractNote] NVARCHAR(MAX),
-  [ContractId] INT,
-  [SourceType] CHAR(1) NOT NULL,
-  [ModifiedBy] NVARCHAR(64),
-  [ModifiedAt] DATETIME DEFAULT GETDATE(),
-  CONSTRAINT FK_Movements_Specimens FOREIGN KEY ([SpecimenId]) REFERENCES [dbo].[Specimens]([Id]),
-  CONSTRAINT FK_Movements_Contracts FOREIGN KEY ([ContractId]) REFERENCES [dbo].[Contracts]([Id]),
-  CONSTRAINT FK_Movements_IncrementReasons FOREIGN KEY ([IncrementReason]) REFERENCES [dbo].[IncrementReasons]([Code]),
-  CONSTRAINT FK_Movements_DecrementReasons FOREIGN KEY ([DecrementReason]) REFERENCES [dbo].[DecrementReasons]([Code])
+  "ContractNote" TEXT,
+  "ContractId" INTEGER,
+  "SourceType" CHAR(1) NOT NULL,
+  "ModifiedBy" VARCHAR(64),
+  "ModifiedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT FK_Movements_Specimens FOREIGN KEY ("SpecimenId") REFERENCES public."Specimens"("Id"),
+  CONSTRAINT FK_Movements_Contracts FOREIGN KEY ("ContractId") REFERENCES public."Contracts"("Id"),
+  CONSTRAINT FK_Movements_IncrementReasons FOREIGN KEY ("IncrementReason") REFERENCES public."IncrementReasons"("Code"),
+  CONSTRAINT FK_Movements_DecrementReasons FOREIGN KEY ("DecrementReason") REFERENCES public."DecrementReasons"("Code")
 );
 
 
 -- UKONSMLOUVY
-CREATE TABLE [dbo].[ContractActions]
+CREATE TABLE public."ContractActions"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [ContractId] INT NOT NULL,
-  [Date] NVARCHAR(10),
-  [ActionType] VARCHAR(5),
-  [ActionInitiator] VARCHAR(5),
-  [Note] NVARCHAR(MAX),
-  [ModifiedBy] NVARCHAR(64),
-  [ModifiedAt] DATETIME DEFAULT GETDATE(),
-  CONSTRAINT FK_ContractActions_Contract FOREIGN KEY ([ContractId]) REFERENCES [dbo].[Contracts]([Id]),
-  CONSTRAINT FK_ContractActions_ContractActionTypes FOREIGN KEY ([ActionType]) REFERENCES [dbo].[ContractActionTypes]([Code]),
-  CONSTRAINT FK_ContractActions_ContractActionInitiators FOREIGN KEY ([ActionInitiator]) REFERENCES [dbo].[ContractActionInitiators]([Code])
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "ContractId" INTEGER NOT NULL,
+  "Date" VARCHAR(10),
+  "ActionType" VARCHAR(5),
+  "ActionInitiator" VARCHAR(5),
+  "Note" TEXT,
+  "ModifiedBy" VARCHAR(64),
+  "ModifiedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT FK_ContractActions_Contract FOREIGN KEY ("ContractId") REFERENCES public."Contracts"("Id"),
+  CONSTRAINT FK_ContractActions_ContractActionTypes FOREIGN KEY ("ActionType") REFERENCES public."ContractActionTypes"("Code"),
+  CONSTRAINT FK_ContractActions_ContractActionInitiators FOREIGN KEY ("ActionInitiator") REFERENCES public."ContractActionInitiators"("Code")
 );
 
-CREATE TABLE [dbo].[Placements]
+CREATE TABLE public."Placements"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [SpecimenId] INT,
-  [OriginSpecimenId] INT,
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "SpecimenId" INTEGER,
+  "OriginSpecimenId" INTEGER,
   -- NOTE: investigate. Remove in case of A and B tables merged
-  [RegionId] INT NOT NULL,
-  [Date] NVARCHAR(10) NOT NULL,
-  [Note] NVARCHAR(MAX),
-  [ModifiedBy] NVARCHAR(64),
-  [ModifiedAt] DATETIME DEFAULT GETDATE(),
-  CONSTRAINT FK_Placements_Specimens FOREIGN KEY ([SpecimenId]) REFERENCES [dbo].[Specimens]([Id]),
-  CONSTRAINT FK_Placements_Regions FOREIGN KEY ([RegionId]) REFERENCES [dbo].[Regions]([Id])
+  "RegionId" INTEGER NOT NULL,
+  "Date" VARCHAR(10) NOT NULL,
+  "Note" TEXT,
+  "ModifiedBy" VARCHAR(64),
+  "ModifiedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT FK_Placements_Specimens FOREIGN KEY ("SpecimenId") REFERENCES public."Specimens"("Id"),
+  CONSTRAINT FK_Placements_Regions FOREIGN KEY ("RegionId") REFERENCES public."Regions"("Id")
 );
 
 -- ZAZNAMY
-CREATE TABLE [dbo].[RecordSpecimens]
+CREATE TABLE public."RecordSpecimens"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [SpecimenId] INT NOT NULL,
-  [Date] NVARCHAR(10) NOT NULL,
-  [ActionType] VARCHAR(5),
-  [Note] NVARCHAR(MAX),
-  [PartnerId] INT,
-  [ModifiedBy] NVARCHAR(64),
-  [ModifiedAt] DATETIME DEFAULT GETDATE(),
-  CONSTRAINT FK_RecordSpecimens_Specimens FOREIGN KEY ([SpecimenId]) REFERENCES [dbo].[Specimens]([Id]),
-  CONSTRAINT FK_RecordSpecimens_RecordActionTypes FOREIGN KEY ([ActionType]) REFERENCES [dbo].[RecordActionTypes]([Code])
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "SpecimenId" INTEGER NOT NULL,
+  "Date" VARCHAR(10) NOT NULL,
+  "ActionType" VARCHAR(5),
+  "Note" TEXT,
+  "PartnerId" INTEGER,
+  "ModifiedBy" VARCHAR(64),
+  "ModifiedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT FK_RecordSpecimens_Specimens FOREIGN KEY ("SpecimenId") REFERENCES public."Specimens"("Id"),
+  CONSTRAINT FK_RecordSpecimens_RecordActionTypes FOREIGN KEY ("ActionType") REFERENCES public."RecordActionTypes"("Code")
 );
 
 -- ZAZNAMY_D
-CREATE TABLE [dbo].[RecordSpecies]
+CREATE TABLE public."RecordSpecies"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [SpeciesId] INT NOT NULL,
-  [Date] NVARCHAR(10) NOT NULL,
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "SpeciesId" INTEGER NOT NULL,
+  "Date" VARCHAR(10) NOT NULL,
   -- NOTE: we should not use Date probably as the column name
-  [ActionType] VARCHAR(5),
-  [Note] NVARCHAR(MAX),
-  [ModifiedBy] NVARCHAR(64),
-  [ModifiedAt] DATETIME DEFAULT GETDATE(),
-  CONSTRAINT FK_RecordSpecies_Species FOREIGN KEY ([SpeciesId]) REFERENCES [dbo].[Species]([Id]),
-  CONSTRAINT FK_RecordSpecies_RecordActionTypes FOREIGN KEY ([ActionType]) REFERENCES [dbo].[RecordActionTypes]([Code])
+  "ActionType" VARCHAR(5),
+  "Note" TEXT,
+  "ModifiedBy" VARCHAR(64),
+  "ModifiedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT FK_RecordSpecies_Species FOREIGN KEY ("SpeciesId") REFERENCES public."Species"("Id"),
+  CONSTRAINT FK_RecordSpecies_RecordActionTypes FOREIGN KEY ("ActionType") REFERENCES public."RecordActionTypes"("Code")
 );
 
 -- ZAHRADY
-CREATE TABLE [dbo].[Zoos]
+CREATE TABLE public."Zoos"
 (
-  [Id] NVARCHAR(3) NOT NULL PRIMARY KEY,
-  [Keyword] NVARCHAR(32) NOT NULL,
-  [Name] NVARCHAR(128),
-  [City] NVARCHAR(48),
-  [StreetNumber] NVARCHAR(32),
-  [PostalCode] NVARCHAR(10),
-  [Country] NVARCHAR(64),
-  [Phone] NVARCHAR(20),
-  [Fax] NVARCHAR(20),
-  [Email] NVARCHAR(128),
-  [Website] NVARCHAR(64),
-  [LastName] NVARCHAR(32),
-  [FirstName] NVARCHAR(32),
-  [Note] NVARCHAR(MAX)
+  "Id" VARCHAR(3) NOT NULL PRIMARY KEY,
+  "Keyword" VARCHAR(32) NOT NULL,
+  "Name" VARCHAR(128),
+  "City" VARCHAR(48),
+  "StreetNumber" VARCHAR(32),
+  "PostalCode" VARCHAR(10),
+  "Country" VARCHAR(64),
+  "Phone" VARCHAR(20),
+  "Fax" VARCHAR(20),
+  "Email" VARCHAR(128),
+  "Website" VARCHAR(64),
+  "LastName" VARCHAR(32),
+  "FirstName" VARCHAR(32),
+  "Note" TEXT
 );
 
-CREATE TABLE [dbo].[Users]
+CREATE TABLE public."Users"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [UserName] NVARCHAR(256) NOT NULL,
-  [VisibleTaxonomyStatuses] NVARCHAR(128),
-  [TaxonomySearchByCz] BIT NOT NULL DEFAULT(0),
-  [TaxonomySearchByLat] BIT NOT NULL DEFAULT(1),
-);
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "UserName" VARCHAR(256) NOT NULL,
+  "VisibleTaxonomyStatuses" VARCHAR(128),
+  "TaxonomySearchByCz" BOOLEAN NOT NULL DEFAULT(0),
+  "TaxonomySearchByLat" BOOLEAN NOT NULL DEFAULT(1));
 
-CREATE TABLE [dbo].[UserRoles]
+CREATE TABLE public."UserRoles"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [UserId] INT NOT NULL,
-  [RoleName] NVARCHAR(256)
-  CONSTRAINT FK_UserRoles_Users FOREIGN KEY ([UserId]) REFERENCES [dbo].[Users]([Id]),
-);
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "UserId" INTEGER NOT NULL,
+  "RoleName" VARCHAR(256)
+  CONSTRAINT FK_UserRoles_Users FOREIGN KEY ("UserId") REFERENCES public."Users"("Id"));
 
-CREATE TABLE [dbo].[UserTableSettings]
+CREATE TABLE public."UserTableSettings"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [UserId] INT NOT NULL,
-  [TableId] NVARCHAR(256) NOT NULL,
-  [Settings] NVARCHAR(MAX) NOT NULL,
-  CONSTRAINT FK_UserTableSettings_Users FOREIGN KEY ([UserId]) REFERENCES [dbo].[Users]([Id]),
-);
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "UserId" INTEGER NOT NULL,
+  "TableId" VARCHAR(256) NOT NULL,
+  "Settings" TEXT NOT NULL,
+  CONSTRAINT FK_UserTableSettings_Users FOREIGN KEY ("UserId") REFERENCES public."Users"("Id"));
 
 -- ZNACENI
-CREATE TABLE [dbo].[Markings]
+CREATE TABLE public."Markings"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [SpecimenId] INT NOT NULL,
-  [MarkingType] VARCHAR(5) NOT NULL,
-  [RingNumber] NVARCHAR(32),
-  [Color] VARCHAR(16),
-  [Side] VARCHAR(2),
-  [LocatedOn] VARCHAR(2),
-  [IsValid] BIT NOT NULL DEFAULT(1),
-  [MarkingDate] NVARCHAR(16),
-  [Note] NVARCHAR(MAX),
-  [ModifiedBy] NVARCHAR(64),
-  [ModifiedAt] DATETIME DEFAULT GETDATE(),
-  CONSTRAINT FK_Markings_Specimens FOREIGN KEY ([SpecimenId]) REFERENCES [dbo].[Specimens]([Id]),
-  CONSTRAINT FK_Markings_MarkingTypes FOREIGN KEY ([MarkingType]) REFERENCES [dbo].[MarkingTypes]([Code])
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "SpecimenId" INTEGER NOT NULL,
+  "MarkingType" VARCHAR(5) NOT NULL,
+  "RingNumber" VARCHAR(32),
+  "Color" VARCHAR(16),
+  "Side" VARCHAR(2),
+  "LocatedOn" VARCHAR(2),
+  "IsValid" BOOLEAN NOT NULL DEFAULT(1),
+  "MarkingDate" VARCHAR(16),
+  "Note" TEXT,
+  "ModifiedBy" VARCHAR(64),
+  "ModifiedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT FK_Markings_Specimens FOREIGN KEY ("SpecimenId") REFERENCES public."Specimens"("Id"),
+  CONSTRAINT FK_Markings_MarkingTypes FOREIGN KEY ("MarkingType") REFERENCES public."MarkingTypes"("Code")
 );
 
-CREATE TABLE [dbo].[SpecimenPlacements]
+CREATE TABLE public."SpecimenPlacements"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [SpecimenId] INT NOT NULL,
-  [ValidSince] NVARCHAR(10) NOT NULL,
-  [LocationId] INT,
-  [OrganizationLevelId] INT,
-  [Note] NVARCHAR(255),
-  [ModifiedBy] NVARCHAR(64),
-  [ModifiedAt] DATETIME DEFAULT GETDATE(),
-  CONSTRAINT FK_SpecimenPlacements_Specimens FOREIGN KEY ([SpecimenId]) REFERENCES [dbo].[Specimens]([Id]),
-  CONSTRAINT FK_SpecimenPlacements_OrganizationLevels FOREIGN KEY ([OrganizationLevelId]) REFERENCES [dbo].[OrganizationLevels]([Id]),
-  CONSTRAINT FK_SpecimenPlacements_Locations FOREIGN KEY ([LocationId]) REFERENCES [dbo].[Locations]([Id])
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "SpecimenId" INTEGER NOT NULL,
+  "ValidSince" VARCHAR(10) NOT NULL,
+  "LocationId" INTEGER,
+  "OrganizationLevelId" INTEGER,
+  "Note" VARCHAR(255),
+  "ModifiedBy" VARCHAR(64),
+  "ModifiedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT FK_SpecimenPlacements_Specimens FOREIGN KEY ("SpecimenId") REFERENCES public."Specimens"("Id"),
+  CONSTRAINT FK_SpecimenPlacements_OrganizationLevels FOREIGN KEY ("OrganizationLevelId") REFERENCES public."OrganizationLevels"("Id"),
+  CONSTRAINT FK_SpecimenPlacements_Locations FOREIGN KEY ("LocationId") REFERENCES public."Locations"("Id")
 );
 
-CREATE TABLE [dbo].[UserFlaggedDistricts]
+CREATE TABLE public."UserFlaggedDistricts"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [UserId] INT NOT NULL,
-  [DistrictId] INT NOT NULL,
-  [ModifiedAt] DATETIME NOT NULL DEFAULT GETDATE(),
-  [ModifiedBy] NVARCHAR(64),
-  CONSTRAINT FK_UserFlaggedDistricts_Users FOREIGN KEY ([UserId]) REFERENCES [dbo].[Users] ([Id]),
-  CONSTRAINT FK_UserFlaggedDistricts_OrganizationLevels FOREIGN KEY ([DistrictId]) REFERENCES [dbo].[OrganizationLevels] ([Id]),
-  CONSTRAINT UQ_UserFlaggedDistricts_User_District UNIQUE ([UserId], [DistrictId])
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "UserId" INTEGER NOT NULL,
+  "DistrictId" INTEGER NOT NULL,
+  "ModifiedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "ModifiedBy" VARCHAR(64),
+  CONSTRAINT FK_UserFlaggedDistricts_Users FOREIGN KEY ("UserId") REFERENCES public."Users" ("Id"),
+  CONSTRAINT FK_UserFlaggedDistricts_OrganizationLevels FOREIGN KEY ("DistrictId") REFERENCES public."OrganizationLevels" ("Id"),
+  CONSTRAINT UQ_UserFlaggedDistricts_User_District UNIQUE ("UserId", "DistrictId")
 );
 
-CREATE TABLE [dbo].[UserFlaggedSpecies]
+CREATE TABLE public."UserFlaggedSpecies"
 (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [UserId] INT NOT NULL,
-  [SpeciesId] INT NOT NULL,
-  [ModifiedAt] DATETIME NOT NULL DEFAULT GETDATE(),
-  [ModifiedBy] NVARCHAR(64),
-  CONSTRAINT FK_UserFlaggedSpecies_Users FOREIGN KEY ([UserId]) REFERENCES [dbo].[Users] ([Id]),
-  CONSTRAINT FK_UserFlaggedSpecies_Species FOREIGN KEY ([SpeciesId]) REFERENCES [dbo].[Species] ([Id]),
-  CONSTRAINT UQ_UserFlaggedSpecies_User_Species UNIQUE ([UserId], [SpeciesId])
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "UserId" INTEGER NOT NULL,
+  "SpeciesId" INTEGER NOT NULL,
+  "ModifiedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "ModifiedBy" VARCHAR(64),
+  CONSTRAINT FK_UserFlaggedSpecies_Users FOREIGN KEY ("UserId") REFERENCES public."Users" ("Id"),
+  CONSTRAINT FK_UserFlaggedSpecies_Species FOREIGN KEY ("SpeciesId") REFERENCES public."Species" ("Id"),
+  CONSTRAINT UQ_UserFlaggedSpecies_User_Species UNIQUE ("UserId", "SpeciesId")
 );
 
-CREATE TABLE [dbo].[SpecimenImages] (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [SpecimenId] INT NOT NULL,
-  [Label] NVARCHAR(255) NOT NULL,
-  [Description] NVARCHAR(1000) NULL,
-  [Image] VARBINARY(MAX) NOT NULL,
-  [ContentType] NVARCHAR(64) NOT NULL,
-  [ModifiedBy] NVARCHAR(64) NULL,
-  [ModifiedAt] DATETIME NULL DEFAULT GETDATE(),
-  CONSTRAINT FK_SpecimenImages_Specimens FOREIGN KEY ([SpecimenId]) REFERENCES [dbo].[Specimens]([Id])
+CREATE TABLE public."SpecimenImages" (
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "SpecimenId" INTEGER NOT NULL,
+  "Label" VARCHAR(255) NOT NULL,
+  "Description" VARCHAR(1000) NULL,
+  "Image" BYTEA NOT NULL,
+  "ContentType" VARCHAR(64) NOT NULL,
+  "ModifiedBy" VARCHAR(64) NULL,
+  "ModifiedAt" TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT FK_SpecimenImages_Specimens FOREIGN KEY ("SpecimenId") REFERENCES public."Specimens"("Id")
 );
 
 -- JOURNAL
 
-CREATE TABLE [dbo].[JournalActionTypes] (
-  [Code] VARCHAR(5) NOT NULL PRIMARY KEY,
-  [JournalEntryType] NVARCHAR(10) NOT NULL CHECK ([JournalEntryType] IN ('Bio', 'Movement')),
-  [Sort] INT NOT NULL,
-  [DisplayName] NVARCHAR(50) NOT NULL,
-  [Note] NVARCHAR(255) NULL,
-  CONSTRAINT UQ_JournalEntryType_Sort UNIQUE ([JournalEntryType], [Sort]),
-  CONSTRAINT UQ_JournalEntryType_DisplayName UNIQUE ([JournalEntryType], [DisplayName])
+CREATE TABLE public."JournalActionTypes" (
+  "Code" VARCHAR(5) NOT NULL PRIMARY KEY,
+  "JournalEntryType" VARCHAR(10) NOT NULL CHECK ("JournalEntryType" IN ('Bio', 'Movement')),
+  "Sort" INTEGER NOT NULL,
+  "DisplayName" VARCHAR(50) NOT NULL,
+  "Note" VARCHAR(255) NULL,
+  CONSTRAINT UQ_JournalEntryType_Sort UNIQUE ("JournalEntryType", "Sort"),
+  CONSTRAINT UQ_JournalEntryType_DisplayName UNIQUE ("JournalEntryType", "DisplayName")
 );
 
-CREATE TABLE [dbo].[JournalEntries] (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [OrganizationLevelId] INT NOT NULL,
-  [SpeciesId] INT NOT NULL,
-  [AuthorName] NVARCHAR(255) NOT NULL,
-  [EntryType] NVARCHAR(10) CHECK ([EntryType] IN ('Bio', 'Movement')),
-  [EntryDate] DATETIME NOT NULL,
-  [ActionTypeCode] VARCHAR(5) NOT NULL,
-  [Status] NVARCHAR(32) NOT NULL CHECK ([Status] IN ('1-review', '2-closed_in_review', '3-review_in_doc', '4-closed_in_doc', '5-solved_in_doc')),
-  [Note] NVARCHAR(1024),
-  [IsLocked] BIT NOT NULL DEFAULT 0,
-  [IsDeleted] BIT NOT NULL DEFAULT 0,
-  [CreatedBy] NVARCHAR(64) NOT NULL,
-  [CreatedAt] DATETIME NOT NULL DEFAULT GETDATE(),
-  [ModifiedBy] NVARCHAR(64),
-  [ModifiedAt] DATETIME NOT NULL DEFAULT GETDATE(),
-  [ReviewedBy] NVARCHAR(64),
-  [ReviewedAt] DATETIME,
-  [CuratorReviewNote] NVARCHAR(255),
-  [ArchiveReviewedBy] NVARCHAR(64),
-  [ArchiveReviewedAt] DATETIME,
-  [ArchiveReviewNote] NVARCHAR(255),
-  CONSTRAINT FK_JournalEntries_OrganizationLevels FOREIGN KEY ([OrganizationLevelId]) REFERENCES [dbo].[OrganizationLevels]([Id]),
-  CONSTRAINT FK_JournalEntries_ActionType FOREIGN KEY ([ActionTypeCode]) REFERENCES [dbo].[JournalActionTypes]([Code]),
-  CONSTRAINT FK_JournalEntries_Species FOREIGN KEY ([SpeciesId]) REFERENCES [dbo].[Species]([Id])
+CREATE TABLE public."JournalEntries" (
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "OrganizationLevelId" INTEGER NOT NULL,
+  "SpeciesId" INTEGER NOT NULL,
+  "AuthorName" VARCHAR(255) NOT NULL,
+  "EntryType" VARCHAR(10) CHECK ("EntryType" IN ('Bio', 'Movement')),
+  "EntryDate" TIMESTAMP NOT NULL,
+  "ActionTypeCode" VARCHAR(5) NOT NULL,
+  "Status" VARCHAR(32) NOT NULL CHECK ("Status" IN ('1-review', '2-closed_in_review', '3-review_in_doc', '4-closed_in_doc', '5-solved_in_doc')),
+  "Note" VARCHAR(1024),
+  "IsLocked" BOOLEAN NOT NULL DEFAULT 0,
+  "IsDeleted" BOOLEAN NOT NULL DEFAULT 0,
+  "CreatedBy" VARCHAR(64) NOT NULL,
+  "CreatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "ModifiedBy" VARCHAR(64),
+  "ModifiedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "ReviewedBy" VARCHAR(64),
+  "ReviewedAt" TIMESTAMP,
+  "CuratorReviewNote" VARCHAR(255),
+  "ArchiveReviewedBy" VARCHAR(64),
+  "ArchiveReviewedAt" TIMESTAMP,
+  "ArchiveReviewNote" VARCHAR(255),
+  CONSTRAINT FK_JournalEntries_OrganizationLevels FOREIGN KEY ("OrganizationLevelId") REFERENCES public."OrganizationLevels"("Id"),
+  CONSTRAINT FK_JournalEntries_ActionType FOREIGN KEY ("ActionTypeCode") REFERENCES public."JournalActionTypes"("Code"),
+  CONSTRAINT FK_JournalEntries_Species FOREIGN KEY ("SpeciesId") REFERENCES public."Species"("Id")
 );
 
-CREATE TABLE [dbo].[JournalEntrySpecimens] (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [JournalEntryId] INT NOT NULL,
-  [SpecimenId] INT NOT NULL,
-  [Note] NVARCHAR(255),
-  [ModifiedBy] NVARCHAR(64),
-  [ModifiedAt] DATETIME NOT NULL DEFAULT GETDATE(),
-  CONSTRAINT FK_JournalEntrySpecimens_JournalEntries FOREIGN KEY ([JournalEntryId]) REFERENCES [dbo].[JournalEntries]([Id]),
-  CONSTRAINT FK_JournalEntrySpecimens_Specimens FOREIGN KEY ([SpecimenId]) REFERENCES [dbo].[Specimens]([Id]),
-  CONSTRAINT UQ_JournalEntrySpecimens UNIQUE ([JournalEntryId], [SpecimenId])
+CREATE TABLE public."JournalEntrySpecimens" (
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "JournalEntryId" INTEGER NOT NULL,
+  "SpecimenId" INTEGER NOT NULL,
+  "Note" VARCHAR(255),
+  "ModifiedBy" VARCHAR(64),
+  "ModifiedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT FK_JournalEntrySpecimens_JournalEntries FOREIGN KEY ("JournalEntryId") REFERENCES public."JournalEntries"("Id"),
+  CONSTRAINT FK_JournalEntrySpecimens_Specimens FOREIGN KEY ("SpecimenId") REFERENCES public."Specimens"("Id"),
+  CONSTRAINT UQ_JournalEntrySpecimens UNIQUE ("JournalEntryId", "SpecimenId")
 );
 
-CREATE TABLE [dbo].[JournalEntryAttributes] (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [JournalEntryId] INT NOT NULL,
-  [AttributeTypeCode] NVARCHAR(64) NOT NULL,
-  [AttributeValue] NVARCHAR(1024),
-  CONSTRAINT FK_JournalEntryAttributes_JournalEntries FOREIGN KEY ([JournalEntryId]) REFERENCES [dbo].[JournalEntries]([Id]) ON DELETE CASCADE
+CREATE TABLE public."JournalEntryAttributes" (
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "JournalEntryId" INTEGER NOT NULL,
+  "AttributeTypeCode" VARCHAR(64) NOT NULL,
+  "AttributeValue" VARCHAR(1024),
+  CONSTRAINT FK_JournalEntryAttributes_JournalEntries FOREIGN KEY ("JournalEntryId") REFERENCES public."JournalEntries"("Id") ON DELETE CASCADE
 );
 
-CREATE TABLE [dbo].[JournalEntrySpecimenAttributes] (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [JournalEntrySpecimenId] INT NOT NULL,
-  [AttributeTypeCode] NVARCHAR(64) NOT NULL,
-  [AttributeValue] NVARCHAR(1024),
-  CONSTRAINT FK_JournalEntrySpecimenAttributes_JournalEntrySpecimens FOREIGN KEY ([JournalEntrySpecimenId]) REFERENCES [dbo].[JournalEntrySpecimens]([Id]) ON DELETE CASCADE
+CREATE TABLE public."JournalEntrySpecimenAttributes" (
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "JournalEntrySpecimenId" INTEGER NOT NULL,
+  "AttributeTypeCode" VARCHAR(64) NOT NULL,
+  "AttributeValue" VARCHAR(1024),
+  CONSTRAINT FK_JournalEntrySpecimenAttributes_JournalEntrySpecimens FOREIGN KEY ("JournalEntrySpecimenId") REFERENCES public."JournalEntrySpecimens"("Id") ON DELETE CASCADE
 );
 
-CREATE TABLE [dbo].[JournalEntryAudits] (
-  [Id] BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [JournalEntryId] INT NOT NULL,
-  [ActionType] VARCHAR(32) NOT NULL,
-  [SerializedData] NVARCHAR(MAX) NULL,
-  [ModifiedBy] NVARCHAR(64) NOT NULL,
-  [ModifiedAt] DATETIME NOT NULL DEFAULT GETDATE(),
-  CONSTRAINT FK_JournalEntryAudits_JournalEntries FOREIGN KEY ([JournalEntryId]) REFERENCES [dbo].[JournalEntries]([Id])
+CREATE TABLE public."JournalEntryAudits" (
+  "Id" BIGINTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "JournalEntryId" INTEGER NOT NULL,
+  "ActionType" VARCHAR(32) NOT NULL,
+  "SerializedData" TEXT NULL,
+  "ModifiedBy" VARCHAR(64) NOT NULL,
+  "ModifiedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT FK_JournalEntryAudits_JournalEntries FOREIGN KEY ("JournalEntryId") REFERENCES public."JournalEntries"("Id")
 );
 
-CREATE TABLE [dbo].[JournalActionTypesToOrganizationLevels] (
-  [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  [ActionTypeCode] VARCHAR(5) NOT NULL,
-  [OrganizationLevelId] INT NOT NULL,
-  CONSTRAINT FK_JournalActionTypesToOrganizationLevels_OrganizationLevels FOREIGN KEY ([OrganizationLevelId]) REFERENCES [dbo].[OrganizationLevels]([Id]),
-  CONSTRAINT FK_JournalActionTypesToOrganizationLevels_ActionType FOREIGN KEY ([ActionTypeCode]) REFERENCES [dbo].[JournalActionTypes]([Code])
+CREATE TABLE public."JournalActionTypesToOrganizationLevels" (
+  "Id" INTEGER GENERATED BY DEFAULT AS IDENTITY NOT NULL PRIMARY KEY,
+  "ActionTypeCode" VARCHAR(5) NOT NULL,
+  "OrganizationLevelId" INTEGER NOT NULL,
+  CONSTRAINT FK_JournalActionTypesToOrganizationLevels_OrganizationLevels FOREIGN KEY ("OrganizationLevelId") REFERENCES public."OrganizationLevels"("Id"),
+  CONSTRAINT FK_JournalActionTypesToOrganizationLevels_ActionType FOREIGN KEY ("ActionTypeCode") REFERENCES public."JournalActionTypes"("Code")
 );
 
 -- VIEWS
-CREATE VIEW [dbo].[TaxonomyHierarchyView] WITH SCHEMABINDING AS
+CREATE VIEW public."TaxonomyHierarchyView" AS
 SELECT 
-    sp.[Id] AS SpeciesId,
-    sp.[NameCz] AS SpeciesNameCz,
-    sp.[NameLat] AS SpeciesNameLat,
-    g.[Id] AS GenusId,
-    g.[NameCz] AS GenusNameCz,
-    g.[NameLat] AS GenusNameLat,
-    fam.[Id] AS FamilyId,
-    fam.[NameCz] AS FamilyNameCz,
-    fam.[NameLat] AS FamilyNameLat,
-    o.[Id] AS OrderId,
-    o.[NameCz] AS OrderNameCz,
-    o.[NameLat] AS OrderNameLat,
-    c.[Id] AS ClassId,
-    c.[NameCz] AS ClassNameCz,
-    c.[NameLat] AS ClassNameLat,
-    p.[Id] AS PhylumId,
-    p.[NameCz] AS PhylumNameCz,
-    p.[NameLat] AS PhylumNameLat,
-    p.[IsVertebrate]
-FROM [dbo].[Species] sp
-INNER JOIN [dbo].[TaxonomyGenera] g ON sp.[TaxonomyGenusId] = g.[Id]
-INNER JOIN [dbo].[TaxonomyFamilies] fam ON g.[TaxonomyFamilyId] = fam.[Id]
-INNER JOIN [dbo].[TaxonomyOrders] o ON fam.[TaxonomyOrderId] = o.[Id]
-INNER JOIN [dbo].[TaxonomyClasses] c ON o.[TaxonomyClassId] = c.[Id]
-INNER JOIN [dbo].[TaxonomyPhyla] p ON c.[TaxonomyPhylumId] = p.[Id];
+    sp."Id" AS SpeciesId,
+    sp."NameCz" AS SpeciesNameCz,
+    sp."NameLat" AS SpeciesNameLat,
+    g."Id" AS GenusId,
+    g."NameCz" AS GenusNameCz,
+    g."NameLat" AS GenusNameLat,
+    fam."Id" AS FamilyId,
+    fam."NameCz" AS FamilyNameCz,
+    fam."NameLat" AS FamilyNameLat,
+    o."Id" AS OrderId,
+    o."NameCz" AS OrderNameCz,
+    o."NameLat" AS OrderNameLat,
+    c."Id" AS ClassId,
+    c."NameCz" AS ClassNameCz,
+    c."NameLat" AS ClassNameLat,
+    p."Id" AS PhylumId,
+    p."NameCz" AS PhylumNameCz,
+    p."NameLat" AS PhylumNameLat,
+    p."IsVertebrate"
+FROM public."Species" sp
+INNER JOIN public."TaxonomyGenera" g ON sp."TaxonomyGenusId" = g."Id"
+INNER JOIN public."TaxonomyFamilies" fam ON g."TaxonomyFamilyId" = fam."Id"
+INNER JOIN public."TaxonomyOrders" o ON fam."TaxonomyOrderId" = o."Id"
+INNER JOIN public."TaxonomyClasses" c ON o."TaxonomyClassId" = c."Id"
+INNER JOIN public."TaxonomyPhyla" p ON c."TaxonomyPhylumId" = p."Id";
 
 -- Create clustered index for the view
-CREATE UNIQUE CLUSTERED INDEX [IX_TaxonomyHierarchyView] ON [dbo].[TaxonomyHierarchyView] ([SpeciesId]);
+-- CREATE UNIQUE CLUSTERED INDEX "IX_TaxonomyHierarchyView" ON public."TaxonomyHierarchyView" ("SpeciesId");
 
-CREATE VIEW [dbo].[ExpositionHierarchyView] WITH SCHEMABINDING AS
+CREATE VIEW public."ExpositionHierarchyView" AS
 SELECT 
-    loc.[Id] AS LocationId,
-    loc.[Name] AS LocationName,
-    loc.[ExpositionSetId],
-    es.[Name] AS ExpositionSetName,
-    es.[ExpositionAreaId],
-    ea.[Name] AS ExpositionAreaName,
-    loc.[OrganizationLevelId] AS DistrictId
-FROM [dbo].[Locations] loc
-INNER JOIN [dbo].[ExpositionSets] es ON loc.[ExpositionSetId] = es.[Id]
-INNER JOIN [dbo].[ExpositionAreas] ea ON es.[ExpositionAreaId] = ea.[Id];
+    loc."Id" AS LocationId,
+    loc."Name" AS LocationName,
+    loc."ExpositionSetId",
+    es."Name" AS ExpositionSetName,
+    es."ExpositionAreaId",
+    ea."Name" AS ExpositionAreaName,
+    loc."OrganizationLevelId" AS DistrictId
+FROM public."Locations" loc
+INNER JOIN public."ExpositionSets" es ON loc."ExpositionSetId" = es."Id"
+INNER JOIN public."ExpositionAreas" ea ON es."ExpositionAreaId" = ea."Id";
 
-CREATE UNIQUE CLUSTERED INDEX [IX_ExpositionHierarchyView] ON [dbo].[ExpositionHierarchyView] ([LocationId]);
+-- CREATE UNIQUE CLUSTERED INDEX "IX_ExpositionHierarchyView" ON public."ExpositionHierarchyView" ("LocationId");
 
-CREATE VIEW [dbo].[OrganizationHierarchyView] WITH SCHEMABINDING AS
+CREATE VIEW public."OrganizationHierarchyView" AS
 SELECT
-	itm.Id as Id,
-	itm.Id as DistrictId,
-  itm.Name as DistrictName,
-	p.Id as WorkplaceId,
-  p.Name as WorkplaceName,
-	pp.Id as DepartmentId,
-  pp.Name as DepartmentName
-FROM
-	[dbo].OrganizationLevels [itm]
-	JOIN [dbo].OrganizationLevels [p] ON itm.ParentId = p.Id
-	JOIN [dbo].OrganizationLevels [pp] ON p.ParentId = pp.Id
-UNION 
+        itm."Id" AS "Id",
+        itm."Id" AS "DistrictId",
+        itm."Name" AS "DistrictName",
+        p."Id" AS "WorkplaceId",
+        p."Name" AS "WorkplaceName",
+        pp."Id" AS "DepartmentId",
+        pp."Name" AS "DepartmentName"
+FROM public."OrganizationLevels" itm
+JOIN public."OrganizationLevels" p ON itm."ParentId" = p."Id"
+JOIN public."OrganizationLevels" pp ON p."ParentId" = pp."Id"
+UNION
 SELECT
-	itm.Id as Id,
-	NULL as DistrictId,
-  NULL as DistrictName,
-	itm.Id as WorkplaceId,
-  itm.Name as WorkplaceName,
-	p.Id as DepartmentId,
-  p.Name as DepartmentName
-FROM
-	[dbo].OrganizationLevels [itm]
-	JOIN [dbo].OrganizationLevels [p] ON itm.ParentId = p.Id
-WHERE
-	itm.[Level] = 'workplace'
-UNION 
+        itm."Id" AS "Id",
+        NULL AS "DistrictId",
+        NULL AS "DistrictName",
+        itm."Id" AS "WorkplaceId",
+        itm."Name" AS "WorkplaceName",
+        p."Id" AS "DepartmentId",
+        p."Name" AS "DepartmentName"
+FROM public."OrganizationLevels" itm
+JOIN public."OrganizationLevels" p ON itm."ParentId" = p."Id"
+WHERE itm."Level" = 'workplace'
+UNION
 SELECT
-	itm.Id as Id,
-	NULL as DistrictId,
-  NULL as DistrictName,
-	NULL as WorkplaceId,
-  NULL as WorkplaceName,
-	itm.Id as DepartmentId,
-  itm.Name as DepartmentName
-FROM
-	[dbo].OrganizationLevels [itm]
-WHERE
-	itm.[Level] = 'department';
+        itm."Id" AS "Id",
+        NULL AS "DistrictId",
+        NULL AS "DistrictName",
+        NULL AS "WorkplaceId",
+        NULL AS "WorkplaceName",
+        itm."Id" AS "DepartmentId",
+        itm."Name" AS "DepartmentName"
+FROM public."OrganizationLevels" itm
+WHERE itm."Level" = 'department';
   

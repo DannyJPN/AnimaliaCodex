@@ -161,7 +161,7 @@ internal class Program
 
     builder.Services.AddDbContext<PziDbContext>((provider, options) =>
     {
-      options.UseSqlServer(builder.Configuration.GetConnectionString("Default"), sqlServerOptionsAction: sqlOptions =>
+      options.UseNpgsql(builder.Configuration.GetConnectionString("Default"), npgsqlOptionsAction: sqlOptions =>
       {
         sqlOptions.CommandTimeout(240);
       });

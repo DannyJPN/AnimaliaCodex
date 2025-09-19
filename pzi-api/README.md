@@ -6,9 +6,9 @@ API project that powers PZI backend.
 
 ## Database connection in local environment
 
-- To configure database connection for local development, it is preferred to use `user-secrets` provided by .net framework. They can be set from Vistual Stuio UI or from command line:
-  - `dotnet user-secrets set "ConnectionStrings:Default" "<<VALUE>>"`
-- We generally use shared instance of database (managing imported data is quite difficult to have per-user DBs), value for connection string can be provided on-demand.
+- The API now targets PostgreSQL. To configure the connection for local development, it is preferred to use `user-secrets` provided by .NET. They can be set from Visual Studio UI or from command line:
+  - `dotnet user-secrets set "ConnectionStrings:Default" "Host=localhost;Port=5432;Database=pzi;Username=pzi;Password=STRONG_PASSWORD"`
+- Connection string values can also be supplied through environment variables (see `ConnectionStrings__Default`). When running inside Docker, point the host to the name of the PostgreSQL container service.
 
 ## Configuration values for container
 
@@ -30,6 +30,10 @@ API project that powers PZI backend.
 Application expose SwaggerUI, when running in dev mode or when configured with specific setting. Swagger is available on address `[host]:[port]/swagger` (by default on `http://localhost:5230`).
 
 ## CLI Commands
+
+### Start local PostgreSQL database
+
+`docker compose -f ../docker-compose.postgres.yml up -d`
 
 ### Build locally
 
